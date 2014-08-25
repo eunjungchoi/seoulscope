@@ -1,2 +1,2 @@
-snailzzang.github.io
-====================
+Seoul Scope
+===========
