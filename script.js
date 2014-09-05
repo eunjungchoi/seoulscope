@@ -1,8 +1,8 @@
+var SS = {};
 var config = {
     map: {
         center: {lat:37.566535, lng:126.9779692},
         zoom: 12,
-        style: [{"featureType":"administrative","elementType":"all","stylers":[{"visibility":"on"},{"saturation":-100},{"lightness":20}]},{"featureType":"road","elementType":"all","stylers":[{"visibility":"on"},{"saturation":-100},{"lightness":40}]},{"featureType":"water","elementType":"all","stylers":[{"visibility":"on"},{"saturation":-10},{"lightness":30}]},{"featureType":"landscape.man_made","elementType":"all","stylers":[{"visibility":"simplified"},{"saturation":-60},{"lightness":10}]},{"featureType":"landscape.natural","elementType":"all","stylers":[{"visibility":"simplified"},{"saturation":-60},{"lightness":60}]},{"featureType":"poi","elementType":"all","stylers":[{"visibility":"off"},{"saturation":-100},{"lightness":60}]},{"featureType":"transit","elementType":"all","stylers":[{"visibility":"off"},{"saturation":-100},{"lightness":60}]}],
     },
     tagDefault: "SEOUL",
     table: {
@@ -19,12 +19,6 @@ Date.prototype.toFormatted = function() {
 }
 
 var pageHome, pageTag, pageSpot;
-
-// function inheritPrototype(childObject, parentObject) {
-//     var copyOfParent = Object.create(parentObject.prototype);
-//     copyOfParent.constructor = childObject;
-//     childObject.prototype = copyOfParent;
-// }
 
 var Index = function(key) {
     var itemkey = key;
@@ -50,166 +44,142 @@ var Index = function(key) {
     }
 }
 
-function Page(obj) {
-    var $obj = $(obj);
-    var _isVisible = false;
+var PageManager = (function() {
+    var _pages = {};
 
-    this.getObj = function() {
-        return $obj;
+    return {
+        add: function(page) {
+            _pages[page.id] = page;
+        },
+    };
+}());
+
+SS.Storage = (function() {
+    var s = sessionStorage;
+    var d = {};
+
+    return {
+        getItem: function(key) {
+            return JSON.parse(s.getItem(key));
+        },
+        setItem: function(key, value) {
+            s.setItem(key, JSON.stringify(value));
+        },
+        getPhotos: function(folder) {
+            var photos = this.getItem(folder);
+            if ( photos instanceof Array ) {
+                var local_d = $.Deferred();
+                local_d.resolve(photos);
+                return local_d.promise();
+            }
+
+            if ( d[folder] )
+                return d[folder].promise();
+
+            var deferred = d[folder] = $.Deferred();
+            var self = this;
+
+            $.getJSON("https://picasaweb.google.com/data/feed/api/user/"+config.picasaweb+"/albumid/"+folder+"?callback=?", {
+                alt: "json",
+            })
+            .done(function(data) {
+                var photos = [];
+                $.each( data.feed.entry, function(i, item) {
+                    photos.push(item.content.src);
+                });
+
+                self.setItem(folder, photos);
+
+                deferred.resolve(photos);
+            });
+
+            return deferred.promise();
+        },
     }
+}());
+
+function Page(el) {
+    var _$el = $(el);
+    var _template = Handlebars.compile(_$el.html());
+
+
+    Object.defineProperty(this, "$el", {
+        get: function() { return _$el; },
+    });
+    Object.defineProperty(this, "isVisible", {
+        get: function() { return _$el.is(":visible"); },
+    });
+
     this.clear = function() {
-        $obj.html('');
+        _$el.html('');
     }
+
     this.show = function() {
         $(".page").hide();
-        $obj.show();
+        _$el.show();
         $("#pages").scrollTop(0);
-
-        _isVisible = true;
     }
+
     this.hide = function() {
-        $obj.hide();
+        _$el.hide();
+    }
 
-        _isVisible = false;
+    this.render = function(data) {
+        _$el.html(_template(data));
     }
-    this.isVisible = function() {
-        return _isVisible;
-    }
+
+    this.clear();
 }
 
-function PageHome(obj) {
-    var $title;
-    var $list;
-    var dates = {};
-
-    Page.call(this, obj);
-
-    this.clear = function() {
-        dates = {};
-        this.getObj().html('');
-
-        $title = $("<h1>").appendTo(this.getObj());
-        $list = $("<ol>").appendTo(this.getObj());
-
-        $title.text("Seoul Scope");
-    }
-
-    function createDateListItem(date) {
-        var $item = $("<li>").attr("id", date.getTime()).appendTo($list);
-        $("<hr>").appendTo($item);
-        var $date_title = $("<h2>").appendTo($item);
-        var $span = $("<span>").addClass("date").text(date.toFormatted()).appendTo($date_title);
-        $("<i>").addClass("fa fa-calendar").prependTo($span);
-
-        return $item;
-    }
-
-    this.addDate = function(date) {
-        var $item = createDateListItem(date);
-
-        var $p = $("<p>").appendTo($item);
-        var $ul = $("<ul>").appendTo($item);
-        dates[date.getTime()] = $item;
-
-        return $item;
-    }
+function PageHome(el) {
+    Page.call(this, el);
 }
-// inheritPrototype(PageHome, Page);
 
-function PageTag(obj) {
-    var $title;
-    var $desc;
-    var $ol;
-    var $ul;
-
-    Page.call(this, obj);
-
-    this.clear = function() {
-        this.getObj().html('');
-
-        $title = $("<h1>").appendTo(this.getObj());
-        $("<hr>").appendTo(this.getObj());
-        $desc = $("<blockquote>").appendTo(this.getObj());
-        $ol = $("<ol>").appendTo(this.getObj());
-        $ul = $("<ul>").appendTo(this.getObj());
-    };
-
-    this.setTitle = function(title) {
-        $title.text(title);
-    };
-
-    this.setDescription = function(desc) {
-        $desc.html(desc);
-    };
+function PageTag(el) {
+    Page.call(this, el);
 
     this.addPhoto = function(img) {
+        var $ul = this.$el.find("ul.images");
         var $li = $("<li>").appendTo($ul);
         var $img = $("<img>").attr("src", img).appendTo($li);
     };
 }
 
-function PageSpot(obj) {
-    var $h1;
-    var $ol;
-
-    Page.call(this, obj);
-
-    this.clear = function() {
-        this.getObj().html('');
-
-        $h1 = $("<h1>").appendTo(this.getObj());
-        $ol = $("<ol>").appendTo(this.getObj());
-    };
-
-    this.setTitle = function(title) {
-        $h1.text(title);
-    };
+function PageSpot(el) {
+    Page.call(this, el);
 
     this.getTitle = function() {
-        return $h1.text();
-    };
-
-    this.addLog = function(log) {
-        var $li = $("<li>").attr("id", log.date.getTime()+"@"+log.name).appendTo($ol);
-        var $h1 = $("<h2>").appendTo($li);
-        $("<span>").addClass("date").text(log.date.toFormatted()).appendTo($h1);
-        $("<hr>").prependTo($li);
-        var $p = $("<p>").html(log.text).appendTo($li);
-        var $ul = $("<ul>").appendTo($li);
-        log.getPhotos($ul, function($ul, photos) {
-            for ( var i = 0 ; i < photos.length ; i++ ) {
-                var $li = $("<li>").appendTo($ul);
-                var $img = $("<img>").attr("src", photos[i]).appendTo($li);
-            }
-        })
-
-        return $li;
+        return this.$el.find("h1").text();
     };
 }
 
+log_id = 0;
 function Log(obj) {
-    var id = 0;
+    function getClientId() {
+        return ++log_id;
+    }
+
+    this.id = getClientId();
     this.name = obj.name;
     this.date = obj.date;
     this.text = obj.text;
-    var photos = [];
-    var folder = obj.folder;
+
+    this.folder = obj.folder;
+    this.spot = Spots.getSpotByName(this.name);
+
+    var _photos = [];
     this.timestamp = this.date.getTime();
 
     this.getPhotos = function(i, callback) {
-        if ( photos.length == 0 ) {
-            $.getJSON("https://picasaweb.google.com/data/feed/api/user/"+config.picasaweb+"/albumid/"+folder+"?callback=?", {
-                alt: "json",
-            })
-            .done(function(data) {
-                $.each( data.feed.entry, function(i, item) {
-                    photos.push(item.content.src);
-                });
-                callback(i, photos);
+        if ( _photos.length == 0 && this.folder ) {
+            SS.Storage.getPhotos(this.folder)
+            .done(function(photos) {
+                _photos = photos;
+                callback(i, _photos);
             });
         }
         else {
-            callback(i, photos);
+            callback(i, _photos);
         }
     }
 }
@@ -217,9 +187,10 @@ function Log(obj) {
 var Map = (function() {
     var _map;
     var _center;
+    var _layers = [google.maps.MapTypeId.ROADMAP, "toner", "toner-lite", "watercolor"];
 
     function changeZoom(zoom) {
-        setTimeout(function() {_map.setZoom(zoom)}, 80);
+        setTimeout(function() { _map.setZoom(zoom) }, 80);
         return;
 
         var delta = zoom - _map.getZoom();
@@ -235,20 +206,33 @@ var Map = (function() {
     }
 
     return {
-        init: function(obj, onTilesLoaded) {
+        get map() { return _map; },
+
+        init: function(obj) {
             var deferred = $.Deferred();
 
             _center = new google.maps.LatLng(config.map.center.lat, config.map.center.lng);
             var mapOptions = {
                 center: _center,
-                mapTypeControl: false,
-                panControl: false,
                 zoom: config.map.zoom,
                 minZoom: config.map.zoom,
-                // styles: config.map.style,
+
+                panControl: false,
+                // mapTypeControl: false,
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                mapTypeControlOptions: {
+                    mapTypeIds: _layers,
+                },
             };
 
             _map = new google.maps.Map(obj, mapOptions);
+            for ( var i = 0 ; i < _layers.length; i++ ) {
+                if ( _layers[i] == google.maps.MapTypeId.ROADMAP )
+                    continue;
+
+                _map.mapTypes.set(_layers[i], new google.maps.StamenMapType(_layers[i]));
+            }
+
             google.maps.event.addListenerOnce(_map, 'tilesloaded',
                 function() {
                     deferred.resolve();
@@ -256,25 +240,13 @@ var Map = (function() {
 
             return deferred.promise();
         },
-        getMap: function() {
-            return _map;
-        },
         reset: function() {
-            // this.setCenter(new google.maps.LatLng(config.map.center.lat, config.map.center.lng));
-            // this.setZoom(config.map.zoom);
             this.moveTo(_center, config.map.zoom);
         },
         moveTo: function(center, zoom) {
             _map.setCenter(center);
             changeZoom(zoom);
         },
-        // setCenter: function(latlng) {
-        //     _map.setCenter(latlng);
-        // },
-        // setZoom: function(zoom) {
-        //     changeZoom(zoom);
-        //     // _map.setZoom(zoom);
-        // }
     }
 }());
 
@@ -336,6 +308,11 @@ var Logs = (function() {
             l.sort(function(a, b) {return a.timestamp < b.timestamp});
             return l;
         },
+        find: function(id) {
+            for ( var i = 0 ; i < logs.length ; i++ )
+                if ( logs[i].id == id )
+                    return logs[i];
+        }
     }
 }());
 
@@ -350,7 +327,7 @@ var Markers = (function() {
         },
         create: function(spot) {
             var marker = new google.maps.Marker({
-                map: Map.getMap(),
+                map: Map.map,
                 position: spot.coordinate,
                 icon: {
                     // Star
@@ -378,6 +355,10 @@ var Indicator = (function() {
 
     function getOffset(timestamp) {
         return Math.floor((timestamp - d2014) / 86400000) * 2;
+    }
+
+    function createAnchor() {
+        return $("<a>");
     }
 
     return {
@@ -430,8 +411,6 @@ function select(table, callback)
     var gvizQuery = new google.visualization.Query('http://www.google.com/fusiontables/gvizdata?tq=' + query);
 
     var deferred = $.Deferred();
-
-    // gvizQuery.send(callback);
     gvizQuery.send(function(response) {
         var table = response.getDataTable();
         var columnIndex = {};
@@ -527,7 +506,6 @@ function loadLogs(callback)
                 }));
             }
 
-            // callback();
             deferred.resolve();
         });
 
@@ -559,36 +537,22 @@ function onClickTag()
 
     Map.moveTo(tag.latlng, tag.zoom);
 
-    var name = tag.name;
+    $target.siblings("ul").show();
 
-    if ( $target.siblings().length == 0 ) {
-        var $ul = $("<ul>").insertAfter($target);
-        var spots = Spots.getSpotsByTag(name);
+    pageTag.render({
+        title: tag.name,
+        description: tag.description,
+    });
 
-        for ( var i = 0 ; i < spots.length ; i++ ) {
-            var $li = $("<li>").appendTo($ul);
-            $li.append($("<a>").addClass("spot").text(spots[i].name).attr("href", "#").data("name", spots[i].name));
-        }
-        $ul.show();
-    }
-    else {
-        $target.siblings("ul").show();
-    }
-
-    pageTag.setTitle(name);
-    pageTag.setDescription(tag.description);
     var photos = tag.photos;
     if ( !photos ) {
         var folder = tag.folder;
-        $.getJSON("https://picasaweb.google.com/data/feed/api/user/"+config.picasaweb+"/albumid/"+folder+"?callback=?", {
-            alt: "json",
-        })
-        .done(function(data) {
-            var photos = [];
-            $.each( data.feed.entry, function(i, item) {
-                photos.push(item.content.src);
-                pageTag.addPhoto(item.content.src);
-            });
+
+        SS.Storage.getPhotos(folder)
+        .done(function(photos) {
+            for ( var i = 0, len = photos.length ; i < len ; i++ ) {
+                pageTag.addPhoto(photos[i]);
+            }
             tag.photos = photos;
         });
     }
@@ -597,7 +561,7 @@ function onClickTag()
             pageTag.addPhoto(photos[i]);
     }
     pageTag.show();
-    pushState(null, "!" + name);
+    pushState(null, "!" + tag.name);
 
     return false;
 }
@@ -610,17 +574,37 @@ function onClickSpot(e)
     if ( e && e.target.tagName == "A" )
         $(this).addClass("active");
 
-    pageSpot.clear();
-    pageSpot.setTitle(name);
-
     Indicator.disable();
     var logs = Logs.getLogsByName(name);
+    var dates = [];
     for ( var i = 0 ; i < logs.length ; i++ ) {
         Indicator.enable(logs[i].timestamp);
-        pageSpot.addLog(logs[i]);
+        dates.push({
+            id: logs[i].date.getTime()+"@"+logs[i].name,
+            log: logs[i],
+        });
     }
 
+    pageSpot.render({
+        title: name,
+        dates: dates,
+    });
     pageSpot.show();
+
+    pageSpot.$el.find("ul.images").each(function() {
+        var $this = $(this);
+        var log = Logs.find($this.data("log-id"));
+
+        if ( !log )
+            return;
+
+        log.getPhotos($this, function($ul, photos) {
+            for ( var i = 0 ; i < photos.length ; i++ ) {
+                var $li = $("<li>").appendTo($ul);
+                var $img = $("<img>").attr("src", photos[i]).appendTo($li);
+            }
+        });
+    });
 
     if ( e )
         pushState(null, name);
@@ -634,14 +618,14 @@ function onClickLog()
         return false;
 
     var timestamp = $(this).attr("href").substring(1);
-    var title = pageSpot.isVisible() ? pageSpot.getTitle() : null;
+    var title = pageSpot.isVisible ? pageSpot.getTitle() : null;
 
+    logId = timestamp;
     if ( title )
         logId = timestamp + "@" + title;
 
     document.getElementById(logId).scrollIntoView(true);
 
-    // history.pushState(null, null, location.href.replace(location.hash,"")+"#"+logId);
     pushState(timestamp, title);
 
     return false;
@@ -650,47 +634,60 @@ function onClickLog()
 function resize()
 {
     $("#map-canvas").width($(window).width() - $("#log-nav").width());
-    $("#pages").width($("#log-nav").width());
 }
 
 function onLoaded()
 {
-    // 홈페이지.
+    // 태그별 스팟.
+    $("#tag-list a").each(function(index, value) {
+        var $target = $(value);
+
+        if ( $target.hasClass("default") )
+            return;
+
+        var tag = $target.data("tag");
+
+        var $ul = $("<ul>").insertAfter($target);
+        var spots = Spots.getSpotsByTag(tag.name);
+        for ( var i = 0 ; i < spots.length ; i++ ) {
+            var $li = $("<li>").appendTo($ul);
+            $li.append($("<a>").addClass("spot").text(spots[i].name).attr("href", "#").data("name", spots[i].name));
+        }
+        $ul.hide();
+    });
+
+    // 홈페이지 render.
     var dates = Logs.getDates();
     for ( i = 0 ; i < dates.length ; i++ ) {
-        var $date_li = pageHome.addDate(new Date(dates[i]));
-        var $ul = $date_li.find("ul");
-        var logs = Logs.getLogs(dates[i]);
-
-        for ( j = 0 ; j < logs.length ; j++ ) {
-            var $li = $("<li>").appendTo($ul);
-            var $h2 = $("<h3>").appendTo($li);
-            var $span_name = $("<span>").text(logs[j].name).appendTo($h2);
-            var $p = $("<p>").appendTo($li);
-            var $span = $("<span>").addClass("tag").appendTo($h2);
-
-            var spot = Spots.getSpotByName(logs[j].name);
-            if ( spot ) {
-                $span_name.html("");
-                $span_name.append($("<a>").text(logs[j].name).attr("href", "#").data("name", logs[j].name));
-                $span.text(spot.tag);
-            }
-
-            $p.html(logs[j].text);
-
-            logs[j].getPhotos($li, function($li, photos) {
-                if ( photos.length > 0 ) {
-                    var $div = $("<div>").addClass("image-wrapper").appendTo($li);
-                    var $image = $("<img>").appendTo($div);
-                    $image.attr("src", photos[0]);
-
-                    $image.one("load", parseHash);
-                }
-            });
-        }
-
         Indicator.create(dates[i]);
+
+        dates[i] = {
+            id: dates[i],
+            date: dates[i],
+            logs: Logs.getLogs(dates[i]),
+        }
     }
+
+    pageHome.render({dates: dates});
+    pageHome.show();
+
+    $("#home-page ul li").each(function() {
+        var $this = $(this);
+        var log = Logs.find($this.data("log-id"));
+
+        if ( !log )
+            return;
+
+        log.getPhotos($this, function($li, photos) {
+            if ( photos.length > 0 ) {
+                var $div = $("<div>").addClass("image-wrapper").appendTo($li);
+                var $image = $("<img>").appendTo($div);
+                $image.attr("src", photos[0]);
+                if ( pageHome.isVisible )
+                    $image.one("load", parseHash);
+            }
+        });
+    });
 
     parseHash();
 }
@@ -702,7 +699,7 @@ function pushState(timestamp, title) {
         href += timestamp;
 
     if ( title )
-        href += "@" + title;
+        href += "@" + encodeURI(title);
 
     history.pushState(null, null, href);
 }
@@ -717,7 +714,7 @@ function parseHash() {
 
     var split = hash.substring(1).split('@');
     var timestamp = split[0];
-    var title = split.length > 1 && split[1];
+    var title = split.length > 1 && decodeURI(split[1]);
     var el;
 
     if ( split.length == 1 ) {
@@ -741,30 +738,23 @@ function parseHash() {
     }
 }
 
-
-
 $(function() {
+    Handlebars.registerHelper('formatDate', function(timestamp) {
+        return new Date(timestamp).toFormatted();
+    });
+
+    // Handlebars.registerHelper('data', function(context, options) {
+    //     return "";
+    // });
+
     resize();
 
     pageHome = new PageHome(document.getElementById("home-page"));
-    pageHome.clear();
-
     pageTag = new PageTag(document.getElementById("tag-page"));
-    pageTag.clear();
-
     pageSpot = new PageSpot(document.getElementById("spot-page"));
-    pageSpot.clear();
 
     Indicator.init();
 
-    // $("#home-page").on("click", ".image-wrapper", function() {
-    //     var $this = $(this);
-    //     console.log($this);
-    //     if ( $this.height() == "200" )
-    //         $this.css("height", "auto");
-    //     else
-    //         $this.css("height", "200px");
-    // });
     $(document).on("click", "a.tag", onClickTag);
     $(document).on("click", ".log-nav a", onClickLog);
     $(document).on("mouseenter", ".log-nav a", function() {
@@ -813,20 +803,17 @@ $(function() {
     $(document).on("click", "a.spot", onClickSpot);
 
     Map.init(document.getElementById("map-canvas"))
+    .done(function() {
+        $.when(loadTags(), loadSpots())
         .done(function() {
-            $.when(loadTags(), loadSpots())
-                .done(function() {
-                    loadLogs()
-                        .done(onLoaded);
-                });
+            loadLogs()
+            .done(onLoaded);
         });
+    });
 
-});
-
-$(window).bind('popstate', function(event) {
-    // var state = event.originalEvent.state;
-
-    parseHash();
+    $(window).bind('popstate', function(event) {
+        parseHash();
+    });
 });
 
 var waitForFinalEvent = (function () {
@@ -844,6 +831,6 @@ var waitForFinalEvent = (function () {
 
 $(window).resize(function() {
     waitForFinalEvent(function() {
-        resize();    
+        resize();
     }, 500, "window.resize");
 })

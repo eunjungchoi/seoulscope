@@ -3,6 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+-->
     <title>Seoul Scope</title>
     <link href='http://www.openhiun.com/hangul/nanumbarungothic.css' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Great+Vibes' rel='stylesheet' type='text/css'>    
@@ -10,7 +13,9 @@
     <link href="css/font-awesome.min.css" rel="stylesheet">
     <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCUphKCCMUpng-f3DZEiCGhT8j06GliYRo&v=3.exp"></script>
     <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
     <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="js/handlebars-v1.3.0.js"></script>
     <script type="text/javascript" src="script.js"></script>
 </head>
 <body>
@@ -25,15 +30,42 @@
         <ul id="tag-list">
         </ul>
     </nav>
-    <div id="map-canvas"></div>
-    <div id="pages">
+    <div id="page-container">
         <div id="home-page" class="page template">
             <h1>Seoul Scope</h1>
+            {{#each dates}}
+            <div id="{{id}}" class="anchor">
+                <h2 class="date"><span><i class="fa fa-calendar"></i>{{formatDate date}}</span></h2>
+                <ul>
+                    {{#each logs}}
+                    <li data-log-id="{{id}}">
+                        <h3><span>{{#if spot}}<a href="#" data-name="{{name}}">{{name}}</a>{{else}}{{name}}{{/if}}<span>{{#if spot}}<span class="tag">{{spot.tag}}</span>{{/if}}</h3>
+                        <p>{{{text}}}</p>
+                    </li>
+                    {{/each}}
+                </ul>
+            </div>
+            {{/each}}
         </div>
-        <div id="tag-page" class="page">
+        <div id="tag-page" class="page template">
+            <h1>{{title}}</h1>
+            <hr>
+            <blockquote>{{description}}</blockquote>
+            <ul class="images">
+                <li><img src=""></li>
+            </ul>
         </div>
-        <div id="spot-page" class="page">
+        <div id="spot-page" class="page template">
+            <h1>{{title}}</h1>
+            {{#each dates}}
+            <div id="{{id}}" class="anchor">
+                <h2 class="date"><span><i class="fa fa-calendar"></i>{{formatDate log.date}}</span></h2>
+                <p>{{{log.text}}}</p>
+                <ul data-log-id="{{log.id}}" class="images"></ul>
+            </div>
+            {{/each}}
         </div>
     </div>
+    <div id="map-canvas"></div>
 </body>
 </html>
