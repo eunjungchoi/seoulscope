@@ -1,0 +1,112 @@
+/* http://meyerweb.com/eric/tools/css/reset/
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+/************/
+
+html, body { height: 100%; background-color: black; font: 10px sans-serif; color: white; }
+
+#ac { position: absolute; top: 30px; right: 30px; }
+
+.full-page { width: 100%; height: 100%; display: none; background-color: gray; }
+
+button.clear { border: none; background-color: transparent; }
+
+.range-value-wrapper { position: absolute; width: 40px; height: 40px; margin: auto 0; top: 0; bottom: 0; }
+.range-value-wrapper-left { right: 50%; margin-right: 40px; border-radius: 5px; }
+.range-value-wrapper-right { left: 50%; margin-left: 40px; }
+.range-value {
+	width: 100%; height: 100%;
+	border-radius: 5px;
+	border: 2px solid #888;
+}
+
+.range-wrapper {
+	box-sizing: border-box;
+	width: 80px;
+	height: 100%;
+	margin: 0 auto;
+	padding: 2% 0;
+}
+
+input[type=range].vertical
+{
+    -webkit-appearance: none;
+    -webkit-appearance: slider-vertical;
+    /*transform:rotate(-90deg);*/
+    border-radius: 5px;
+    width: 80px;
+    height: 100%;
+    vertical-align: middle;
+}
+
+input[type=range], ::-moz-range-track, ::-ms-track {
+	/*-webkit-appearance: none;*/
+	background-color: #3f91e5;
+/*	width: 250px;
+	height:20px;
+*/}
+
+::-webkit-slider-thumb, ::-moz-range-thumb, ::-ms-thumb {
+	/*-webkit-appearance: none;*/
+	background-color: #666;
+	width: 100px;
+	height: 200px;
+}
+
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #fff;
+  shape-rendering: crispEdges;
+}
+
+.dot {
+  stroke: #fff;
+}

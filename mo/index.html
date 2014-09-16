@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mo</title>
+    <link href="style.css" rel="stylesheet">
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="ac">
+        <button id="flip" class="clear"><i class="fa fa-refresh fa-4x"></i></button>
+    </div>
+    <div id="mo-input" class="full-page">
+        <div class="range-value-wrapper range-value-wrapper-left"><button class="range-value">0</button></div>
+        <div class="range-wrapper">
+            <input type="range" min="-5" max="5" id="input-val" class="vertical"/>
+        </div>
+        <div class="range-value-wrapper range-value-wrapper-right"><button class="range-value">0</button></div>
+    </div>
+    <div id="mo-graph" class="full-page"></div>
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="/js/jquery-2.1.1.min.js" charset="utf-8"></script>
+<script type="text/javascript" src="script.js"></script>
+</body>
+</html>

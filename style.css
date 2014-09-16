@@ -128,7 +128,7 @@ ul.images { font-size: 0; }
 
 .page h1, .page h2, .page h3, .page p, .page hr { margin-left: 16px; margin-right: 16px; }
 
-.page p { font-size: 0.9em; margin-top: 0.5em; color: #999; letter-spacing: 0.09em; line-height: 130%; padding-left: 16px; }
+.page p { font-size: 0.9em; margin-top: 0.5em; color: #999; line-height: 130%; padding-left: 16px; }
 .page blockquote {
     margin: 1em 0; color: #999; line-height: 130%; margin-left: 16px;
     quotes: "\201C" "\201D" "\2018" "\2019";
@@ -164,6 +164,8 @@ ul.images { font-size: 0; }
 #log-nav .today { background-color:#ffaa17; }
 
 @media (max-width:730px) {
+  html, body { font-family: 'AppleSDGothicNeo-Light', sans-serif; }
+
   .log-nav { width: 100%; bottom: -4px; top: auto; visibility: hidden; }
   #tag-nav { top: 0; }
 
