@@ -127,7 +127,7 @@ $(function() {
 	});
 
 	function orientationchange() {
-		var orientation = window.orientation || 90;
+		var orientation = window.orientation || (window.orientation === undefined) ? 90 : 0;
 
 		switch ( orientation ) {
 			case 90:
