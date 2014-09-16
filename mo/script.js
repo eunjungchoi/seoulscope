@@ -61,6 +61,9 @@ $(function() {
 			xAxis.ticks(d3.time.days, 1);
 		}
 
+		var svg = d3.select("#mo-graph svg");
+		if ( svg[0][0] !== null )
+			svg.remove();
 
 		svg = d3.select("#mo-graph").append("svg")
 				.attr("width", width)
