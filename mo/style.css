@@ -49,21 +49,24 @@ table {
 
 /************/
 
-html, body { height: 100%; background-color: black; font: 10px sans-serif; color: white; }
+html, body { height: 100%; background-color: black; }
 
-#ac { position: absolute; top: 30px; right: 30px; }
+#ac { position: absolute; top: 20px; right: 20px; }
 
-.full-page { width: 100%; height: 100%; display: none; background-color: gray; }
+.full-page { width: 100%; height: 100%; display: none; background-color: #eee; }
 
 button.clear { border: none; background-color: transparent; }
 
-.range-value-wrapper { position: absolute; width: 40px; height: 40px; margin: auto 0; top: 0; bottom: 0; }
-.range-value-wrapper-left { right: 50%; margin-right: 40px; border-radius: 5px; }
-.range-value-wrapper-right { left: 50%; margin-left: 40px; }
+.range-value-wrapper { position: absolute; width: 60px; height: 60px; margin: auto 0; top: 0; bottom: 0; }
+.range-value-wrapper-left { left: 20px; }
+.range-value-wrapper-right { right: 20px; }
 .range-value {
 	width: 100%; height: 100%;
 	border-radius: 5px;
 	border: 2px solid #888;
+	font-size: 20px;
+	color: white;
+	background-color: gray;
 }
 
 .range-wrapper {
@@ -86,19 +89,20 @@ input[type=range].vertical
 }
 
 input[type=range], ::-moz-range-track, ::-ms-track {
-	/*-webkit-appearance: none;*/
+	-webkit-appearance: none;
 	background-color: #3f91e5;
-/*	width: 250px;
-	height:20px;
-*/}
-
-::-webkit-slider-thumb, ::-moz-range-thumb, ::-ms-thumb {
-	/*-webkit-appearance: none;*/
-	background-color: #666;
-	width: 100px;
-	height: 200px;
+	width: 60px;
+	height: 60px;
 }
 
+::-webkit-slider-thumb, ::-moz-range-thumb, ::-ms-thumb {
+	-webkit-appearance: none;
+	background-color: #666;
+	width: 60px;
+	height: 60px;
+}
+
+#mo-graph { font: 10px sans-serif; color: white; }
 
 .axis path,
 .axis line {
