@@ -51,6 +51,9 @@ table {
 
 html, body { height: 100%; background-color: black; }
 
+/*.page { display:none; }*/
+.page { position: absolute; top: 0px; left: 0px; z-index: 1000; width: 100%; height: 100%; background-color: white; }
+
 #ac { position: absolute; top: 20px; right: 20px; z-index: 999;}
 
 .full-page { width: 100%; height: 100%; display: none; background-color: #eee; }
@@ -108,7 +111,6 @@ button.clear { border: none; background-color: transparent; }
 
 	display: none;
 }
-
 
 
 #mo-graph { font: 10px sans-serif; color: white; }

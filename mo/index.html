@@ -8,6 +8,7 @@
     <link href="/css/font-awesome.min.css" rel="stylesheet">
 </head>
 <body>
+<div id="view">
     <div id="ac">
         <button id="trash" class="clear"><i class="fa fa-trash-o fa-3x"></i></button>
         <button id="flip" class="clear"><i class="fa fa-refresh fa-3x"></i></button>
@@ -16,7 +17,17 @@
     <div id="mo-graph" class="full-page">
         <div class="tooltip"></div>
     </div>
+</div>
+<div id="login" class="page">
+    <form id="login-form">
+        <input type="text" id="login-email"/>
+        <input type="password" id="login-password"/>
+        <input type="submit" value="Login"/>
+    </form>
+</div>
 <script src="js/d3.v3.min.js" charset="utf-8"></script>
+<script src="js/firebase.js" charset="utf-8"></script>
+<script src="js/firebase-simple-login.js"></script>
 <script src="js/jquery-2.1.1.min.js" charset="utf-8"></script>
 <script type="text/javascript" src="script.js"></script>
 </body>

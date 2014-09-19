@@ -1,10 +1,53 @@
-var GraphPage
-
 $(function() {
+	var fbRef = new Firebase("https://blazing-torch-4074.firebaseio.com");
+	var authRef = new Firebase("https://blazing-torch-4074.firebaseio.com/.info/authenticated");
+
+	var authClient = new FirebaseSimpleLogin(fbRef, function(error, user) {
+		if (error) {
+			// an error occurred while attempting login
+			console.log(error);
+		} else if (user) {
+			d3.select("#login").style("display", "none");
+			d3.select("#view").style("display", "block");
+
+// myRef.child('users').child(user.uid).set({
+//         displayName: user.displayName,
+//         provider: user.provider,
+//         provider_id: user.id
+//       });
+			S.connect(user);
+
+			console.log("User ID: " + user.uid + ", Provider: " + user.provider);
+		} else {
+			// user is logged out
+		}
+	});
+
+	// authRef.on("value", function(snap) {
+	// 	if (snap.val() === true) {
+	// 		alert("authenticated");
+	// 	} else {
+	// 		alert("not authenticated");
+	// 	}
+	// });
+
 	var S = (function() {
-		var data = null;
+		var data = [];
+		var fbRefFeeling;
 
 		return {
+			connect: function(user) {
+				fbRefFeeling = new Firebase("https://blazing-torch-4074.firebaseio.com/feeling/"+user.uid);
+
+				fbRefFeeling.on("value", function(snapshot) {
+					data = d3.values(snapshot.val());
+					data.forEach(function(elem, index) {
+						elem.date = new Date(elem.date);
+						// elem.date = d3.time.format.iso.parse(row.date)
+					});
+					GraphPage.update();
+				});
+			},
 			write: function(val) {
 				var date = new Date();
 
@@ -18,12 +61,13 @@ $(function() {
 				// 마지막 데이터를 덮어 쓸 것인지?
 				if ( data.length && data[data.length-1].date.toJSON() == date.toJSON() ) {
 					data[data.length-1].val = val;
+
 					GraphPage.render();
 				}
 				else {
-					data.push({
-						date: date,
-						val: val
+					fbRefFeeling.push({
+						date: date.toJSON(),
+						val: val,
 					});
 
 					GraphPage.update();
@@ -32,21 +76,11 @@ $(function() {
 				localStorage.setItem("MODATA", JSON.stringify(data));
 			},
 			read: function() {
-				if ( data )
-					return data;
-
-				data = (JSON.parse(localStorage.getItem("MODATA")) || []);
-
-				data.forEach(function(elem, index) {
-					elem.date = new Date(elem.date);
-					// elem.date = d3.time.format.iso.parse(row.date)
-				});
-
 				return data;
 			},
 			clear: function() {
 				localStorage.removeItem("MODATA");
-				data = null;
+				data = [];
 			},
 		};
 
@@ -276,7 +310,6 @@ $(function() {
  * Graph page
  */
  	var GraphPage = (function() {
- 	// GraphPage = (function() {
 		var SCALE = {first: 0, quarterday: 1, halfday: 2, day: 3, towdays: 4, week: 5, towweeks: 6, month: 7, towmonths: 8, halfyear: 9, year: 10, last: 11}
 		var ZOOM_LEVEL = [
 			{name: "year", },
@@ -435,7 +468,6 @@ $(function() {
  			},
  			update: function() {
 				var moData = S.read();
-
 				// chart.line.selectAll("path.line")
 				// 	.data([moData])
 				// 	.enter()
@@ -691,4 +723,17 @@ $(function() {
 		})
 
 	// setTimeout(GraphPage.refreshToday, 1000);
+
+	// d3.select("#login").style("margin-left", "0");
+	d3.select("#login-form")
+		.on("submit", function() {
+			d3.event.preventDefault();
+			authClient.login('password', {
+				email: document.getElementById("login-email").value,
+				password: document.getElementById("login-password").value,
+				rememberMe: true
+			});
+
+			return false;
+		})
 });
