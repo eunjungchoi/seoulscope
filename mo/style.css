@@ -113,7 +113,7 @@ button.clear { border: none; background-color: transparent; }
 }
 
 
-#mo-graph { font: 10px sans-serif; color: white; }
+#mo-graph { font: 10px sans-serif; color: white; line-height: 0; }
 
 .axis path,
 .axis line {
@@ -167,3 +167,94 @@ button.clear { border: none; background-color: transparent; }
 
 	#mo-graph { width: 80%; float: left; }
 }
+
+#loading {
+	background-color: #d35400;
+}
+
+/**
+ *
+ */
+    .spinner {
+		position: absolute;
+		margin: auto;
+
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		width: 60px;
+		height: 60px;
+		background-color: #fff;
+
+		/*margin: auto auto;*/
+		-webkit-animation: rotateplane 1.2s infinite ease-in-out;
+		animation: rotateplane 1.2s infinite ease-in-out;
+    }
+
+    @-webkit-keyframes rotateplane {
+      0% { -webkit-transform: perspective(120px) }
+      50% { -webkit-transform: perspective(120px) rotateY(180deg) }
+      100% { -webkit-transform: perspective(120px) rotateY(180deg)  rotateX(180deg) }
+    }
+
+    @keyframes rotateplane {
+      0% {
+        transform: perspective(120px) rotateX(0deg) rotateY(0deg);
+        -webkit-transform: perspective(120px) rotateX(0deg) rotateY(0deg);
+      } 50% {
+        transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg);
+        -webkit-transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg);
+      } 100% {
+        transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
+        -webkit-transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
+      }
+    }
+
+
+#login {}
+
+	#login-form {
+		position: absolute;
+		margin: auto;
+
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+
+		height: 150px;
+		width: 350px;
+		padding: 10px;
+	}
+
+	#login-form input[type=text], #login-form input[type=password] {
+		width: 250px;
+		height: 30px;
+		background: transparent;
+		border: 1px solid rgba(0,0,0,0.6);
+		border-radius: 2px;
+		color: #000;
+		font-family: 'Exo', sans-serif;
+		font-size: 16px;
+		font-weight: 400;
+		padding: 4px;
+	}
+
+	#login-form input[type=password] { margin-top: 10px; }
+
+	#login-form input[type=submit] {
+		width: 260px;
+		height: 30px;
+		background: #000;
+		border: 1px solid #000;
+		/*cursor: pointer;*/
+		border-radius: 2px;
+		color: #a18d6c;
+		font-family: 'Exo', sans-serif;
+		font-size: 16px;
+		font-weight: 400;
+		padding: 6px;
+		margin-top: 10px;
+	}
+

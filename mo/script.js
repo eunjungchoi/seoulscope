@@ -7,6 +7,7 @@ $(function() {
 			// an error occurred while attempting login
 			console.log(error);
 		} else if (user) {
+			d3.select("#loading").remove();
 			d3.select("#login").style("display", "none");
 			d3.select("#view").style("display", "block");
 
@@ -19,7 +20,7 @@ $(function() {
 
 			console.log("User ID: " + user.uid + ", Provider: " + user.provider);
 		} else {
-			// user is logged out
+			d3.select("#loading").remove();
 		}
 	});
 
@@ -724,7 +725,6 @@ $(function() {
 
 	// setTimeout(GraphPage.refreshToday, 1000);
 
-	// d3.select("#login").style("margin-left", "0");
 	d3.select("#login-form")
 		.on("submit", function() {
 			d3.event.preventDefault();
