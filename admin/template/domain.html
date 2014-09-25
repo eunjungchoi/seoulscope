@@ -1,0 +1,66 @@
+<h1 class="page-header">도시</h1>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th style="width:10%;">#</th>
+                <th style="width:15%;">Name</th>
+                <th style="width:15%;">Desc.</th>
+                <th style="width:25%;">Center</th>
+                <th style="width:10%;">Zoom</th>
+                <th style="width:10%;">Order</th>
+                <th style="width:15%;">...</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="domain in domains">
+                <td>{{domain.id}}</td>
+                <td>
+                    <span editable-text="domain.name" e-name="name" e-form="rowform" onbeforesave="beforeSave($data, domain.id)" e-required>
+                        {{ domain.name }}
+                    </span>
+                </td>
+                <td>
+                    <span editable-text="domain.description" e-name="description" e-form="rowform">
+                        {{domain.description}}
+                    </span>
+                </td>
+                <td>
+                    <a class="btn btn-default btn-xs" href="https://www.google.com/maps/@{{domain.center}},{{domain.zoom}}z" target="_blank" ng-show="domain.center"><span class="glyphicon glyphicon-map-marker"></span></a>
+                    <span editable-text="domain.center" e-name="center" e-form="rowform">
+                        {{domain.center}}
+                    </span>
+                </td>
+                <td>
+                    <span editable-text="domain.zoom" e-name="zoom" e-form="rowform">
+                        {{domain.zoom}}
+                    </span>
+                </td>
+                <td>
+                    <span editable-text="domain.order" e-name="order" e-form="rowform">
+                        {{domain.order}}
+                    </span>
+                </td>
+                <td class="text-left" style="white-space: nowrap">
+                    <form editable-form name="rowform" ng-show="rowform.$visible" class="form-buttons form-inline" ng-show="rowform.$visible" shown="inserted == domain" onaftersave="saveDomain($data, domain.id);">
+                        <button type="submit" ng-disabled="rowform.$waiting" class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-ok"></span></button>
+                        <button type="button" ng-disabled="rowform.$waiting" ng-click="rowform.$cancel()" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-remove"></span></button>
+                    </form>
+                    <div class="buttons" ng-show="!rowform.$visible">
+                        <button class="btn btn-primary btn-xs" ng-click="rowform.$show()"><span class="glyphicon glyphicon-edit"></span></button>
+                    </div>
+                </td>
+            </tr>
+<!--                             <tr>
+                <td><button class="btn btn-default" ng-click="addDomain()">Add row</button></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="text-left">
+                </td>
+            </tr> -->
+        </tbody>
+    </table>
+</div>

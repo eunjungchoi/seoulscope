@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Admin - Seoul Scope</title>
+    <link rel="stylesheet" href="bootstrap/3.2.0/css/bootstrap.min.css">
+    <!-- <link rel="stylesheet" href="bootstrap/3.2.0/css/bootstrap-theme.min.css"> -->
+    <link href="angular-xeditable-0.1.8/css/xeditable.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+    <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="js/lodash-2.4.1.min.js"></script>
+    <script src="angularjs/1.2.24/angular.min.js"></script>
+    <script src="angularjs/1.2.24/angular-route.min.js"></script>
+    <script src="angular-xeditable-0.1.8/js/xeditable.min.js"></script>
+    <script src="bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="seoulscope.js"></script>
+    <style>
+        #loader {
+            z-index: -1;
+            opacity: 0;
+            background: rgba(0,0,0,.6);
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            transition: all 0.5s ease;
+        }
+        #loader.show {
+            z-index: 9999;
+            opacity: 1;
+            transition: all 0.5s ease;
+        }
+    </style>
+</head>
+<body ng-controller="BaseController">
+    <div id="loader" class="loader">
+        <div class="loader-icon"></div>
+    </div>
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Seoul Scope</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-right ng-hide" ng-show="currentUser">
+                    <li><a href="#/domain" class="fusiontable">도시</a></li>
+                    <li><a href="#/zone" class="fusiontable">지역</a></li>
+                    <li><a href="#/spot" class="fusiontable">장소</a></li>
+                    <li><a href="#/log" class="fusiontable">방문</a></li>
+                    <li>
+                        <a href="" ng-click="logout();"><span class="glyphicon glyphicon-off" style="height: 16px; vertical-align: middle;"></span> Sign out</a>
+                    </li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="" ng-show="!currentUser" ng-click="login();"><span class="glyphicon glyphicon-off" style="height: 16px; vertical-align: middle;"></span> Sign in</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid ng-hide" ng-show="currentUser">
+        <div class="row">
+            <div class="col-sm-3 col-md-2 sidebar">
+                 <ul class="nav nav-sidebar">
+                    <li><a href="#/domain" class="fusiontable">도시</a></li>
+                    <li><a href="#/zone" class="fusiontable">지역</a></li>
+                    <li><a href="#">장소</a></li>
+                    <li><a href="#/log">방문</a></li>
+                </ul>
+                <h5>Links</h5>
+                <ul class="nav nav-sidebar">
+                    <li><a href="https://drive.google.com/drive/#folders/0By5x-l3d_ADMMzVwZ2FBNUoxNTQ/0B35GERqszolzNlR3SDRRZW9wbUU" target="_blank">테이블폴더</a></li>
+                    <li><a href="https://www.google.com/fusiontables/DataSource?docid=1wyHT6nLOpM57AbT0dyS86Bz6f-bxP6mpv2Qw4vlm" target="_blank">도시테이블</a></li>
+                    <li><a href="https://www.google.com/fusiontables/DataSource?docid=1mIutuGqnSYRGz7hrWn__Ll-Xq-Ru-5amqoBJHiXU" target="_blank">지역테이블</a></li>
+                    <li><a href="https://www.google.com/fusiontables/DataSource?docid=1EMWASH1WZg-hwRq4Sds8hBA_TSxs1IGtMe3TcjK7" target="_blank">장소테이블</a></li>
+                    <li><a href="https://www.google.com/fusiontables/DataSource?docid=1bW1VuYnupB4thC4iSyhzDxTNwxHTMHm4qHIxxDWc" target="_blank">방문테이블</a></li>
+                    <li><a href="https://picasaweb.google.com/home" target="_blank">Picasa</a></li>
+                </ul>
+            </div>
+            <div id="body" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+                <div class="alert alert-error" role="alert" ng-show="message">
+                    <button type="button" class="close" ng-click="message = null"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <strong>Error!</strong> {{ message }}
+                </div>
+                <div ng-view>
+                </div>
+            </div>
+        </div>
+    </div>
+<script src="script.js"></script>
+<script src="//apis.google.com/js/client.js?onload=handleClientLoad"></script>
+</body>
+</html>

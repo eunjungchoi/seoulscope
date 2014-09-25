@@ -53,7 +53,14 @@ table {
 /**
  * Seoul Scope.
  */
-html, body { height: 100%; font-family: 'Nanum Barun Gothic', sans-serif; box-sizing: border-box; background-color: #eee; color: #666; }
+html, body {
+  height: 100%;
+  font-family: 'Nanum Barun Gothic', sans-serif;
+  /*font-family: 'Apple SD Gothic Neo', sans-serif;*/
+  box-sizing: border-box;
+  background-color: #eee;
+  color: #666;
+}
 
 /*a, a:link, a:visited, a:hover, a:active { text-decoration:none; }*/
 a { text-decoration: none; }

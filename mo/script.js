@@ -1,4 +1,4 @@
-$(function() {
+(function() {
 	var fbRef = new Firebase("https://blazing-torch-4074.firebaseio.com");
 	var authRef = new Firebase("https://blazing-torch-4074.firebaseio.com/.info/authenticated");
 
@@ -11,14 +11,7 @@ $(function() {
 			d3.select("#login").style("display", "none");
 			d3.select("#view").style("display", "block");
 
-// myRef.child('users').child(user.uid).set({
-//         displayName: user.displayName,
-//         provider: user.provider,
-//         provider_id: user.id
-//       });
 			S.connect(user);
-
-			console.log("User ID: " + user.uid + ", Provider: " + user.provider);
 		} else {
 			d3.select("#loading").remove();
 		}
@@ -98,6 +91,7 @@ $(function() {
 	function checkWindowSize() {
 		isLandscape = winWidth() > winHeight();
 		isMobileView = winWidth() < 768;
+		// console.log(winWidth(), winHeight());
 	};
 	checkWindowSize();
 
@@ -177,7 +171,8 @@ $(function() {
 				d3.select(this)
 					.style("top", (el.offsetTop + el.offsetHeight/2) + "px")
 
-				if ( pos[0] < $(window).width() / 2 )
+				// if ( pos[0] < $(window).width() / 2 )
+				if ( pos[0] < winWidth() / 2 )
 					d3.select("#mo-input div.output")
 						.style("right", "20px")
 						.style("left", "auto")
@@ -257,7 +252,6 @@ $(function() {
 					.style("opacity", 1)
 			})
 
-
 		function findEl(y) {
 			var arr = d3.selectAll("#mo-input div.data")[0];
 			var found = false;
@@ -313,13 +307,17 @@ $(function() {
  	var GraphPage = (function() {
 		var SCALE = {first: 0, quarterday: 1, halfday: 2, day: 3, towdays: 4, week: 5, towweeks: 6, month: 7, towmonths: 8, halfyear: 9, year: 10, last: 11}
 		var ZOOM_LEVEL = [
-			{name: "year", },
-			{},
-			{},
-			{},
-			{},
-			{},
-			{},
+			{name: "", zoom: 0},
+			{name: "year", zoom: 1460},
+			{name: "halfyear", zoom: 730},
+			{name: "towmonths", zoom: 248},
+			{name: "month", zoom: 124},
+			{name: "towweeks", zoom: 56},
+			{name: "week", zoom: 28},
+			{name: "towdays", zoom: 8},
+			{name: "day", zoom: 4},
+			{name: "halfday", zoom: 2},
+			{name: "quarterday", zoom: 1},
 		];
 
 		var settings = getSettings();
@@ -339,6 +337,8 @@ $(function() {
 				v: null,
 				l: null,
 				line: null,
+
+				z: null,
 			}
 		};
 
@@ -358,9 +358,7 @@ $(function() {
 				},
 			};
 
-			settings.container = {
-				height: (settings.height - settings.margin.top - settings.margin.bottom)
-			};
+			settings.container.height = settings.height - settings.margin.top - settings.margin.bottom;
 
 			return settings;
 		};
@@ -448,10 +446,23 @@ $(function() {
 // 				// d: (line.interpolate("step-before"))(moData),
 // 				// d: (line.interpolate("monotone"))(moData),
 
+			chart.func.z = d3.scale.ordinal()
+				// .domain([ZOOM_LEVEL[1].zoom, ZOOM_LEVEL[10].zoom])
+				// .rangeBands([1, 10])
+				.domain([ZOOM_LEVEL[10].zoom, ZOOM_LEVEL[1].zoom])
+				.rangeBands([10, 1])
+
+			// chart.zoomer = d3.behavior.zoom()
+			// 	.x(chart.func.z)
+			// 	.on("zoom", function() {
+			// 		console.log("zoom");
+			// 	});
 
 			chart.zoomer = d3.behavior.zoom()
 				.x(chart.func.t)
 				.scaleExtent( [ 10 / 365, 40 ] )
+				// .scaleExtent( [ 1, 1460 ] )
+				// .scale( 1460 / 28 )
 				.on("zoom", function() {
 					self.render();
 				})
@@ -463,7 +474,7 @@ $(function() {
 
  		var self = {
  			invalidate: function() {
- 				settins = getSettings();
+ 				settings = getSettings();
 
  				createChart();
  			},
@@ -540,6 +551,16 @@ $(function() {
  			},
  			// zoom 시...
  			render: function() {
+				// function checkScroll() {
+ 			// 		var x_range = chart.func.t.domain();
+ 			// 		var today = new Date();
+ 			// 		var diff = new Date(x_range[1]).getTime() - new Date(x_range[0]).getTime();
+
+ 			// 		if ( x_range[1].getTime() > today.getTime() + 1000 * 60 * 60 * 24 * 365 )
+				// 		chart.func.t.domain([new Date(today - diff), today]);
+				// }
+				// checkScroll();
+
  				chart.axis
  					.call(chart.func.axis);
 
@@ -675,27 +696,30 @@ $(function() {
 // 	}
 
 	function onResize() {
+// console.log("onResize");
 		checkWindowSize();
 		GraphPage.invalidate();
 
 		if ( !isMobileView ) {
-			$("#mo-graph").show();
-			$("#mo-input").show();
+			d3.select("#mo-graph").style("display", "block");
+			d3.select("#mo-input").style("display", "block");
 
 			InputRange.redraw();
-			GraphPage.update();
+			GraphPage.render();
 			return;
 		}
 
 		if ( isLandscape ) {
-			$("#mo-graph").show();
-			$("#mo-input").hide();
+			d3.select("#mo-graph").style("display", "block");
+			d3.select("#mo-input").style("display", "none");
 
-			GraphPage.update();
+			GraphPage.render();
 		}
 		else {
-			$("#mo-graph").hide();
-			$("#mo-input").show();
+			d3.select("#mo-graph").style("display", "none");
+			d3.select("#mo-input").style("display", "block");
+
+			InputRange.redraw();
 		}
 
 		window.scrollTo(0, 1);
@@ -715,14 +739,6 @@ $(function() {
 				InputRange.redraw();
 		})
 
-	d3.select("button#trash")
-		.on("click", function() {
-			if ( confirm("DELETE?") ) {
-				S.clear();
-				GraphPage.update();
-			}
-		})
-
 	// setTimeout(GraphPage.refreshToday, 1000);
 
 	d3.select("#login-form")
@@ -736,4 +752,82 @@ $(function() {
 
 			return false;
 		})
-});
+
+	function hammerPan(front, back, e) {
+		var deg = e.deltaX * 90 / (winHeight() * 20 / 100)
+		if ( deg > 180 )
+			deg -= 360
+		else if ( deg < -180 )
+			deg += 360;
+
+		var f, b;
+		if ( deg < -90 || deg > 90 ) {
+			f = back;
+			b = front;
+		}
+		else {
+			f = front;
+			b = back;
+		}
+
+		f.style("display", "block");
+		b.style("display", "none");
+
+		front
+			.style("-webkit-transform", "perspective("+winHeight()+"px) rotateY("+deg+"deg)")
+			.style("transform", "perspective("+winHeight()+"px) rotateY("+deg+"deg)")
+		back
+			.style("-webkit-transform", "perspective("+winHeight()+"px) rotateY("+(180+deg)+"deg)")
+			.style("transform", "perspective("+winHeight()+"px) rotateY("+(180+deg)+"deg)")
+	}
+
+	function hammerPanEnd(front, back, e) {
+		var deg = e.deltaX * 90 / (winHeight() * 20 / 100)
+		if ( deg > 180 )
+			deg -= 360
+		else if ( deg < -180 )
+			deg += 360;
+
+		var f, b;
+		if ( deg < -90 || deg > 90 ) {
+			f = back;
+			b = front;
+		}
+		else {
+			f = front;
+			b = back;
+		}
+
+		f.style("display", "block");
+		b.style("display", "none");
+
+		if ( f === back )
+			deg = 180 + deg;
+
+		f
+			.transition()
+			.duration(500)
+			.styleTween("-webkit-transform", tween)
+			.styleTween("transform", tween)
+
+		function tween(d, i, s) {
+			return d3.interpolateString("perspective("+winHeight()+"px) rotateY("+deg+"deg)", "perspective("+winHeight()+"px) rotateY(0deg)");
+		}
+	}
+
+	// var hammer_input = new Hammer(document.getElementById("mo-input"));
+	// hammer_input.on("panleft panright", function(e) {
+	// 	hammerPan(d3.select("#mo-input"), d3.select("#mo-graph"), e);
+	// });
+	// hammer_input.on("panend", function(e) {
+	// 	hammerPanEnd(d3.select("#mo-input"), d3.select("#mo-graph"), e);
+	// });
+
+	// var hammer_graph = new Hammer(document.getElementById("mo-graph"));
+	// hammer_graph.on("panleft panright", function(e) {
+	// 	hammerPan(d3.select("#mo-graph"), d3.select("#mo-input"), e);
+	// });
+	// hammer_graph.on("panend", function(e) {
+	// 	hammerPanEnd(d3.select("#mo-graph"), d3.select("#mo-input"), e);
+	// });
+})();
