@@ -11,7 +11,7 @@ var G = {
 }
 
 function checkAuth() {
-	console.log(1);
+	console.log("authorize");
 	gapi.auth.authorize({
 			client_id: G.client_id,
 			scope: G.scope,

@@ -34,14 +34,18 @@
 				templateUrl: 'template/zone.html',
 				controller: 'ZoneController',
 			})
+			// .when('/spot', {
+			// 	templateUrl: 'template/spot.html',
+			// 	controller: 'SpotController',
+			// })
 			.when('/log', {
 				templateUrl: 'template/log.html',
 				controller: 'LogController',
 			})
     });
 
-	app.run(['$rootScope', '$location', 'editableOptions', 'editableThemes', 'FusionTable', 'config',
-		function($rootScope, $location, editableOptions, editableThemes, FusionTable, config) {
+	app.run(['$rootScope', '$location', 'editableOptions', 'editableThemes', 'db',
+		function($rootScope, $location, editableOptions, editableThemes, db) {
 			editableThemes.bs3.inputClass = 'input-sm';
 			editableThemes.bs3.buttonsClass = 'btn-sm';
 			editableOptions.theme = 'bs3';
@@ -54,20 +58,13 @@
 
     		if ( $rootScope.currentUser ) {
 				document.getElementById("loader").classList.add("show");
-				FusionTable.select(config.tables.domain)
-					.then(function(data) {
-						$rootScope.domains = data;
 
-						return FusionTable.select(config.tables.zone);
-		    		})
-		    		.then(function(data) {
-		    			$rootScope.zones = data;
-
+				db.load()
+					.then(function() {
 						document.getElementById("loader").classList.remove("show");
 						if ( G.hash )
 							$location.path(G.hash.replace("#", ""));
-
-		    		})
+					});
 	    	}
 		}
 	]);
@@ -97,7 +94,7 @@
 							immediate: false,
 						},
 						function(response) {
-				console.log("cont", response);
+				// console.log("cont", response);
 							// response.status.signed_in;
 							if ( response && !response.error ) {
 								gapi.client.load('fusiontables', 'v1', function() {
@@ -147,6 +144,35 @@
 			message = null;
 		}
 	});
+
+	app.factory('db', ['config', 'FusionTable',
+		function(config, FusionTable) {
+			var domains = [];
+			var zones = [];
+			var spots = [];
+
+			return {
+				getDomains: function() { return domains; },
+				getZones: function() { return zones; },
+				getSpots: function() { return spots; },
+				load: load,
+			}
+
+			function load() {
+				return FusionTable.select(config.tables.domain)
+					.then(function(data) {
+						domains = data;
+						return FusionTable.select(config.tables.zone);
+		    		})
+		    		.then(function(data) {
+		    			zones = data;
+						return FusionTable.select(config.tables.spot);
+		    		})
+		    		.then(function(data) {
+		    			spots = data;
+		    		})
+		}
+	}]);
 
     app.service('FusionTable', ['$http', 'config', '$rootScope', 'global',
     	function($http, config, $rootScope, global) {
@@ -253,6 +279,8 @@
 
     app.factory('PicasaFactory', ['config', '$http', '$rootScope',
     	function(config, $http, $rootScope) {
+    		var albums = [];
+
 	    	return ({
 	    		getAlbums: getAlbums,
 	    		getPhotos: getPhotos,
@@ -275,18 +303,13 @@
 	    	function getPhotos(link) {
 	    		var req = $http({
 	    			url: link,
-					// method: 'post',
-	    			// headers: {
-	    			// 	'GData-Version': 2,
-	    			// 	'authorization': 'Bearer ' + $rootScope.currentUser.token,
-	    			// },
 	    		})
 
 	    		return req.then( onGetPhotos );
 	    	}
 
 	    	function onGetAlbums(response) {
-	    		var albums = [];
+	    		albums = [];
 
 	    		response.data.feed.entry.forEach(function(d) {
 	    			albums.push({
@@ -328,16 +351,12 @@
 				AuthFactory.logout();
 				$scope.currentUser = $rootScope.currentUser;
 			}
-
-			// $scope.getAlbums = function() {
-			// 	Picasa.getAlbums();
-			// }
 		}
 	]);
 
-    app.controller('DomainController', ['$scope', '$rootScope', 'FusionTable', 'config',
-		function($scope, $rootScope, FusionTable, config) {
-			$scope.domains = $rootScope.domains;
+    app.controller('DomainController', ['$scope', 'FusionTable', 'config', 'db',
+		function($scope, FusionTable, config, db) {
+			$scope.domains = db.getDomains();
 
 	    	$scope.addDomain = function() {
 				$scope.inserted = {
@@ -370,15 +389,9 @@
     	}
     ]);
 
-    app.controller('ZoneController', ['$scope', '$rootScope', 'FusionTable', 'config',
-		function($scope, $rootScope, FusionTable, config) {
-			$scope.zones = $rootScope.zones;
-
-			// FusionTable.select(config.tables.zone)
-			// 	.then(function(data) {
-			// 		$scope.zones = data;
-			// 		$scope.addZone();
-	  //   		});
+    app.controller('ZoneController', ['$scope', 'FusionTable', 'config', 'db',
+		function($scope, FusionTable, config, db) {
+			$scope.zones = db.getZones();
 
 	    	$scope.addZone = function() {
 				$scope.inserted = {
@@ -454,13 +467,19 @@
 			// 	});
 			// });
    //  }]);
-    app.controller('LogController', ['$scope', 'FusionTable', 'PicasaFactory', 'config',
-		function($scope, FusionTable, Picasa, config) {
+    app.controller('LogController', ['$scope', 'FusionTable', 'PicasaFactory', 'config', 'db',
+		function($scope, FusionTable, Picasa, config, db) {
 			$scope.logs = [];
 			$scope.albums = [];
 
 			FusionTable.select(config.tables.log)
 				.then(function(data) {
+					data.forEach(function(el) {
+						if ( el.photos == "" )
+							el.photos = []
+						else
+							el.photos = el.photos.split("|");
+					});
 					$scope.logs = data;
 	    		});
 
@@ -483,6 +502,7 @@
 
 	    	$scope.saveLog = function(data) {
 	    		if ( data && $scope.editing ) {
+	    			data.Name = $('.typeahead').typeahead('val');
 	    			var d = angular.copy(data);
 	    			d.photos = d.photos.join("|");
 
@@ -506,6 +526,7 @@
 	    	$scope.editLog = function(log) {
 	    		// $scope.editing = angular.copy(log);
 	    		$scope.editing = log;
+				$('.typeahead').typeahead('val', $scope.editing.Name);
 		   	}
 
 	    	$scope.cancel = function() {
@@ -522,6 +543,51 @@
 	    				$scope.editing.photos = photos;
 	    			});
 	    	}
+
+			var substringMatcher = function(strs) {
+			  return function findMatches(q, cb) {
+			    var matches, substrRegex;
+
+			    // an array that will be populated with substring matches
+			    matches = [];
+
+			    // regex used to determine if a string contains the substring `q`
+			    substrRegex = new RegExp(q, 'i');
+
+			    // iterate through the pool of strings and for any string that
+			    // contains the substring `q`, add it to the `matches` array
+			    $.each(strs, function(i, str) {
+			      if (substrRegex.test(str)) {
+			        // the typeahead jQuery plugin expects suggestions to a
+			        // JavaScript object, refer to typeahead docs for more info
+			        matches.push({ value: str });
+			      }
+			    });
+
+			    cb(matches);
+			  };
+			};
+
+			var spots = _.pluck(db.getSpots(), "Name");
+	    	$(".typeahead").typeahead({
+					hint: true,
+	  				highlight: true,
+	  				minLength: 1
+		    	},
+		    	{
+					name: 'Name',
+  					displayKey: 'value',
+  					source: substringMatcher(spots)
+	    		}
+	    	);
+			$('.typeahead').on("typeahead:selected typeahead:autocompleted", function(e) {
+				setTimeout(function() {
+					$scope.$apply(function() {
+						$scope.editing.Name = $('.typeahead').typeahead('val');
+					});
+				}, 1);
+			});
+
     	}
     ]);
 })();
