@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Admin - Seoul Scope</title>
     <link rel="stylesheet" href="bootstrap/3.2.0/css/bootstrap.min.css">
-    <!-- <link rel="stylesheet" href="bootstrap/3.2.0/css/bootstrap-theme.min.css"> -->
+    <link rel="stylesheet" href="bootstrap/3.2.0/css/bootstrap-theme.min.css">
     <link href="angular-xeditable-0.1.8/css/xeditable.css" rel="stylesheet">
+    <link href="css/typeaheadjs.css" rel="stylesheet">
     <link href="style.css" rel="stylesheet">
     <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
     <script src="js/lodash-2.4.1.min.js"></script>
@@ -63,7 +64,7 @@
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     <li>
-                        <a href="" ng-show="!currentUser" ng-click="login();"><span class="glyphicon glyphicon-off" style="height: 16px; vertical-align: middle;"></span> Sign in</a>
+                        <a href="" ng-show="!currentUser" ng-click="login(false);"><span class="glyphicon glyphicon-off" style="height: 16px; vertical-align: middle;"></span> Sign in</a>
                     </li>
                 </ul>
             </div>
@@ -75,7 +76,7 @@
                  <ul class="nav nav-sidebar">
                     <li><a href="#/domain" class="fusiontable">도시</a></li>
                     <li><a href="#/zone" class="fusiontable">지역</a></li>
-                    <li><a href="#">장소</a></li>
+                    <li><a href="#/spot">장소</a></li>
                     <li><a href="#/log">방문</a></li>
                 </ul>
                 <h5>Links</h5>
@@ -99,6 +100,6 @@
         </div>
     </div>
 <script src="script.js"></script>
-<script src="//apis.google.com/js/client.js?onload=handleClientLoad"></script>
+<script src="//apis.google.com/js/client.js?onload=onClientLoad"></script>
 </body>
 </html>
