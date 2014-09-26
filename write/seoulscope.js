@@ -40,15 +40,15 @@
 	    	},
 	        zone: {
 	        	id: "1mIutuGqnSYRGz7hrWn__Ll-Xq-Ru-5amqoBJHiXU",
-	        	fields: "Name, Description, Center, Zoom, Photo, Shape",
+	        	fields: "name, description, center, zoom, photo, shape",
 	        },
 	        spot: {
 	        	id: "1EMWASH1WZg-hwRq4Sds8hBA_TSxs1IGtMe3TcjK7",
-	        	fields: "Name, Address, Coordinates, Area",
+	        	fields: "name, address, coordinates, area",
 	        },
 	        log: {
 	        	id: "1bW1VuYnupB4thC4iSyhzDxTNwxHTMHm4qHIxxDWc",
-	        	fields: "Date, Name, Text, Photo, photos",
+	        	fields: "date, name, text, photo, photos",
 	        }
     	},
     });
@@ -385,7 +385,7 @@
 
 	    		if ( force || albums.length == 0 ) {
 		    		$http({
-		    			url: "https://picasaweb.google.com/data/feed/api/user/" + Auth.currentUser.id + '?alt=json',
+		    			url: "https://picasaweb.google.com/data/feed/api/user/101855579290050276785?alt=json",
 		    		})
 						.then(
 							function(response) {
@@ -411,12 +411,13 @@
 
 	    	function onGetAlbums(response) {
 	    		albums = [];
-
+// console.log(response.data);
 	    		response.data.feed.entry.forEach(function(d) {
 	    			albums.push({
 	    				id: d.id.$t,
 	    				title: d.title.$t,
 	    				link: d.link[0].href,
+	    				folder: d.gphoto$id.$t,
 	    			});
 	    		});
 
@@ -436,8 +437,14 @@
 	]);
 
 	app.controller('BaseController', [
-		'$scope',
-		function($scope) {
+		'$scope', 'PicasaFactory',
+		function($scope, Picasa) {
+			$scope.albums = [];
+
+    		Picasa.getAlbums(false)
+    			.then(function(albums) {
+	    			$scope.albums = albums;
+    			})
 		}
 	]);
 
@@ -526,10 +533,10 @@
 	    	$scope.addSpot = function() {
 				$scope.inserted = {
 					id: null,
-					Name: '',
-					Address: '',
-					Coordinates: '',
-					Area: '',
+					name: '',
+					address: '',
+					coordinates: '',
+					area: '',
 				}
 				$scope.spots.push($scope.inserted);
 	    	}
@@ -580,21 +587,21 @@
 	    	$scope.addLog = function() {
 				$scope.inserted = {
 					// id: null,
-					Name: '',
-					Date: '',
-					Photo: '',
-					Text: '',
+					name: '',
+					date: '',
+					photo: '',
+					photos: [],
+					text: '',
 				}
 				// $scope.logs.push($scope.inserted);
 	    	}
 
 	    	$scope.saveLog = function(data) {
 	    		if ( data && $scope.editing ) {
-	    			data.Name = $('.typeahead').typeahead('val');
 	    			var d = angular.copy(data);
 	    			d.photos = d.photos.join("|");
 
-	    			FusionTable.update(config.tables.log, d)
+	    			ftTable.update(d)
 	    				.then(function(res_id) {
 	    					$scope.editing = null;
 	    				});
@@ -602,7 +609,7 @@
 
 	    		if ( $scope.inserted )
 	    		{
-	    			FusionTable.insert(config.tables.log, $scope.inserted)
+	    			ftTable.insert(config.tables.log, $scope.inserted)
 	    				.then(function(res_id) {
 	    					$scope.inserted.id = res_id;
 	    					$scope.logs.push($scope.inserted);
@@ -614,7 +621,7 @@
 	    	$scope.editLog = function(log) {
 	    		// $scope.editing = angular.copy(log);
 	    		$scope.editing = log;
-				$('.typeahead').typeahead('val', $scope.editing.Name);
+				// $('.typeahead').typeahead('val', $scope.editing.Name);
 		   	}
 
 	    	$scope.cancel = function() {
@@ -624,35 +631,21 @@
 	    			$scope.editing = null;
 	    	}
 
+	    	$scope.getSpots = function() {
+	    		return Db.getSpots();
+	    	}
+
+	    	$scope.selectSpot = function() {
+	    		$scope.editing.Name = $scope.editingForm.selSpot.$viewValue.Name;
+	    	}
+
 	    	$scope.selectAlbum = function() {
-	    		console.log($scope.album);
+	    		$scope.editing.photo = $scope.album.folder;
 	    		Picasa.getPhotos($scope.album.link)
 	    			.then(function(photos) {
 	    				$scope.editing.photos = photos;
 	    			});
 	    	}
-
-			var spot_names = _.pluck(spots, "Name");
-	    	$(".typeahead").typeahead({
-					hint: true,
-	  				highlight: true,
-	  				minLength: 1
-		    	},
-		    	{
-					name: 'Name',
-  					displayKey: 'value',
-  					source: H.substringMatcher(spot_names)
-	    		}
-	    	);
-	    	// 불필요한 듯.
-			$('.typeahead').on("typeahead:selected typeahead:autocompleted", function(e) {
-				setTimeout(function() {
-					$scope.$apply(function() {
-						$scope.editing.Name = $('.typeahead').typeahead('val');
-					});
-				}, 1);
-			});
-
     	}
     ]);
 })();

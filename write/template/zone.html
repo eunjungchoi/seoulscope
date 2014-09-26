@@ -16,24 +16,24 @@
             <tr ng-repeat="zone in zones">
                 <td>{{zone.id}}</td>
                 <td>
-                    <span editable-text="zone.Name" e-name="Name" e-form="rowform" onbeforesave="beforeSave($data, zone.id)" e-required>
-                        {{ zone.Name }}
+                    <span editable-text="zone.name" e-name="name" e-form="rowform" onbeforesave="beforeSave($data, zone.id)" e-required>
+                        {{ zone.name }}
                     </span>
                 </td>
                 <td>
-                    <span editable-textarea="zone.Description" e-name="Description" e-form="rowform">
-                        {{zone.Description}}
+                    <span editable-textarea="zone.description" e-name="description" e-form="rowform">
+                        {{zone.description}}
                     </span>
                 </td>
                 <td>
-                    <a class="btn btn-default btn-xs" href="https://www.google.com/maps/@{{zone.Center}},{{zone.Zoom}}z" target="_blank" ng-show="zone.Center"><span class="glyphicon glyphicon-map-marker"></span></a>
-                    <span editable-text="zone.Center" e-name="Center" e-form="rowform">
-                        {{zone.Center}}
+                    <a class="btn btn-default btn-xs" href="https://www.google.com/maps/@{{zone.center}},{{zone.zoom}}z" target="_blank" ng-show="zone.center"><span class="glyphicon glyphicon-map-marker"></span></a>
+                    <span editable-text="zone.center" e-name="center" e-form="rowform">
+                        {{zone.center}}
                     </span>
                 </td>
                 <td>
-                    <span editable-text="zone.Zoom" e-name="Zoom" e-form="rowform">
-                        {{zone.Zoom}}
+                    <span editable-text="zone.zoom" e-name="zoom" e-form="rowform">
+                        {{zone.zoom}}
                     </span>
                 </td>
                 <td>

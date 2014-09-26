@@ -1,43 +1,3 @@
-// (function() {
-//     var app = angular.module('seoulscope', []);
-
-//     app.constant('config', {
-//         api_key: "AIzaSyCUphKCCMUpng-f3DZEiCGhT8j06GliYRo",
-//         tables: {
-//             domain: {
-//                 id:  "1wyHT6nLOpM57AbT0dyS86Bz6f-bxP6mpv2Qw4vlm",
-//                 fields: "name, description, center, zoom, 'order'",
-//             },
-//             zone: {
-//                 id: "1mIutuGqnSYRGz7hrWn__Ll-Xq-Ru-5amqoBJHiXU",
-//                 fields: "Name, Description, Center, Zoom, Photo, Shape",
-//             },
-//             spot: {
-//                 id: "1EMWASH1WZg-hwRq4Sds8hBA_TSxs1IGtMe3TcjK7",
-//                 fields: "Name, Address, Coordinates, Area",
-//             },
-//             log: {
-//                 id: "1bW1VuYnupB4thC4iSyhzDxTNwxHTMHm4qHIxxDWc",
-//                 fields: "Date, Name, Text, Photo, photos",
-//             }
-//         },
-//         map: {
-//             center: {lat:37.566535, lng:126.9779692},
-//             zoom: 12,
-//         },
-//         picasa: "101855579290050276785",
-//     });
-
-//     app.config(function($routeProvider) {
-//         // $routeProvider
-//         //     .when('/domain', {
-//         //         templateUrl: 'template/domain.html',
-//         //         controller: 'DomainController',
-//         //     })
-//     }
-// })();
-
-
 var SS = {};
 var config = {
     map: {
@@ -260,9 +220,9 @@ var Map = (function() {
                 panControl: false,
                 // mapTypeControl: false,
                 mapTypeId: google.maps.MapTypeId.ROADMAP,
-                mapTypeControlOptions: {
-                    mapTypeIds: _layers,
-                },
+                // mapTypeControlOptions: {
+                //     mapTypeIds: _layers,
+                // },
             };
 
             _map = new google.maps.Map(obj, mapOptions);
@@ -481,17 +441,17 @@ function loadTags()
             $("<a>").attr("href", "#").addClass("tag default active").text(config.tagDefault).appendTo($li);
 
             for (var i = 0; i < numRows; i++) {
-                var name = table.getValueByLabel(i, "Name");
+                var name = table.getValueByLabel(i, "name");
                 var $li = $("<li>").appendTo("#tag-nav ul");
                 var $a = $("<a>").attr("href", "#").addClass("tag").text(name).appendTo($li);
-                var latlng = table.getValueByLabel(i, "Center").split(',');
+                var latlng = table.getValueByLabel(i, "center").split(',');
 
                 $a.data("tag", {
                     "name": name,
-                    "description": table.getValueByLabel(i, "Description"),
-                    "center": table.getValueByLabel(i, "Center"),
-                    "zoom": parseInt(table.getValueByLabel(i, "Zoom")),
-                    "folder": table.getValueByLabel(i, "Photo"),
+                    "description": table.getValueByLabel(i, "description"),
+                    "center": table.getValueByLabel(i, "center"),
+                    "zoom": parseInt(table.getValueByLabel(i, "zoom")),
+                    "folder": table.getValueByLabel(i, "photo"),
                     "latlng": new google.maps.LatLng(latlng[0], latlng[1]),
                 });
             }
@@ -513,11 +473,11 @@ function loadSpots()
             var numRows = table.getNumberOfRows();
 
             for (var i = 0; i < numRows; i++) {
-                var splitCoordinates = table.getValueByLabel(i, "Coordinates").split(',');
+                var splitCoordinates = table.getValueByLabel(i, "coordinates").split(',');
                 var spot = Spots.add({
-                    name: table.getValueByLabel(i, "Name"),
+                    name: table.getValueByLabel(i, "name"),
                     coordinate: new google.maps.LatLng(splitCoordinates[0], splitCoordinates[1]),
-                    tag: table.getValueByLabel(i, "Area"),
+                    tag: table.getValueByLabel(i, "area"),
                 });
 
                 Markers.create(spot);
@@ -539,10 +499,10 @@ function loadLogs(callback)
 
             for (var i = 0; i < numRows; i++) {
                 Logs.add(new Log({
-                    name: table.getValueByLabel(i, "Name"),
-                    date: table.getValueByLabel(i, "Date"),
-                    text: table.getValueByLabel(i, "Text").replace(/\\\\/g, "<br>"),
-                    folder: table.getValueByLabel(i, "Photo"),
+                    name: table.getValueByLabel(i, "name"),
+                    date: table.getValueByLabel(i, "date"),
+                    text: table.getValueByLabel(i, "text").replace(/\\\\/g, "<br>"),
+                    folder: table.getValueByLabel(i, "photo"),
                 }));
             }
 

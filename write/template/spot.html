@@ -15,24 +15,24 @@
             <tr ng-repeat="spot in spots">
                 <td>{{spot.id}}</td>
                 <td>
-                    <span editable-text="spot.Name" e-name="Name" e-form="rowform" onbeforesave="beforeSave($data, spot.id)" e-required>
-                        {{ spot.Name }}
+                    <span editable-text="spot.name" e-name="name" e-form="rowform" onbeforesave="beforeSave($data, spot.id)" e-required>
+                        {{ spot.name }}
                     </span>
                 </td>
                 <td>
-                    <span editable-text="spot.Address" e-name="Address" e-form="rowform">
-                        {{spot.Address}}
+                    <span editable-text="spot.address" e-name="address" e-form="rowform">
+                        {{spot.address}}
                     </span>
                 </td>
                 <td>
-                    <a class="btn btn-default btn-xs" href="https://www.google.com/maps/@{{spot.Coordinates}},16z" target="_blank" ng-show="spot.Coordinates"><i class="glyphicon glyphicon-map-marker"></i></a>
-                    <span editable-text="spot.Coordinates" e-name="Coordinates" e-form="rowform">
-                        {{spot.Coordinates}}
+                    <a class="btn btn-default btn-xs" href="https://www.google.com/maps/@{{spot.coordinates}},16z" target="_blank" ng-show="spot.coordinates"><i class="glyphicon glyphicon-map-marker"></i></a>
+                    <span editable-text="spot.coordinates" e-name="coordinates" e-form="rowform">
+                        {{spot.coordinates}}
                     </span>
                 </td>
                 <td>
-                    <span editable-text="spot.Area" e-name="Area" e-form="rowform">
-                        {{spot.Area}}
+                    <span editable-text="spot.area" e-name="area" e-form="rowform">
+                        {{spot.area}}
                     </span>
                 </td>
                 <td class="text-left" style="white-space: nowrap">
