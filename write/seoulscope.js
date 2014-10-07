@@ -1,33 +1,33 @@
 (function() {
-	var H = H || {};
+	// var H = H || {};
 
-	H = {
-		substringMatcher: function(strs) {
-			return function findMatches(q, cb) {
-				var matches, substrRegex;
+	// H = {
+	// 	substringMatcher: function(strs) {
+	// 		return function findMatches(q, cb) {
+	// 			var matches, substrRegex;
 
-				// an array that will be populated with substring matches
-				matches = [];
+	// 			// an array that will be populated with substring matches
+	// 			matches = [];
 
-				// regex used to determine if a string contains the substring `q`
-				substrRegex = new RegExp(q, 'i');
+	// 			// regex used to determine if a string contains the substring `q`
+	// 			substrRegex = new RegExp(q, 'i');
 
-				// iterate through the pool of strings and for any string that
-				// contains the substring `q`, add it to the `matches` array
-				strs.forEach(function(str) {
-					if ( substrRegex.test(str) ) {
-						// the typeahead jQuery plugin expects suggestions to a
-						// JavaScript object, refer to typeahead docs for more info
-						matches.push({ value: str });
-					}
-				});
+	// 			// iterate through the pool of strings and for any string that
+	// 			// contains the substring `q`, add it to the `matches` array
+	// 			strs.forEach(function(str) {
+	// 				if ( substrRegex.test(str) ) {
+	// 					// the typeahead jQuery plugin expects suggestions to a
+	// 					// JavaScript object, refer to typeahead docs for more info
+	// 					matches.push({ value: str });
+	// 				}
+	// 			});
 
-				cb(matches);
-			};
-		},
-	}
+	// 			cb(matches);
+	// 		};
+	// 	},
+	// }
 
-    var app = angular.module('seoulscope', ['ngRoute', 'xeditable']);
+    var app = angular.module('seoulscope', ['ngRoute', 'xeditable', 'ngSanitize', 'ui.select']);
 
     app.constant('config', {
     	api_key: "AIzaSyCUphKCCMUpng-f3DZEiCGhT8j06GliYRo",
@@ -48,7 +48,7 @@
 	        },
 	        log: {
 	        	id: "1bW1VuYnupB4thC4iSyhzDxTNwxHTMHm4qHIxxDWc",
-	        	fields: "date, name, text, photo, photos",
+	        	fields: "date, time, name, text, photo, photos",
 	        }
     	},
     });
@@ -70,6 +70,14 @@
 			.when('/log', {
 				templateUrl: 'template/log.html',
 				controller: 'LogController',
+			})
+			.when('/log/add', {
+				templateUrl: 'template/log_form.html',
+				controller: 'LogFormController',
+			})
+			.when('/log/:id/edit', {
+				templateUrl: 'template/log_form.html',
+				controller: 'LogFormController',
 			})
     });
 
@@ -291,7 +299,10 @@
 						continue;
 
 					fields.push(key);
-					values.push(data[key]);
+					if ( key == 'text' )
+						values.push(data[key].replace(/'/g, "\\'"));
+					else
+						values.push(data[key]);
 				}
 
 			    var query = "INSERT INTO "+table.id+" ('"+fields.join("','")+"') VALUES ('"+values.join("','")+"')";
@@ -307,7 +318,10 @@
 					if ( !data.hasOwnProperty(key) || key == 'id')
 						continue;
 
-					fields.push("'"+key+"' = '"+data[key]+"'")
+					if ( key == 'text' )
+						fields.push("'"+key+"' = '"+data[key].replace(/'/g, "\\'")+"'")
+					else
+						fields.push("'"+key+"' = '"+data[key]+"'")
 				}
 
 			    var query = "UPDATE "+table.id+" SET "+fields.join(',')+" WHERE ROWID = '"+data.id+"'";
@@ -372,10 +386,14 @@
     app.factory('PicasaFactory', [
     	'$http', '$q', 'AuthService',
     	function($http, $q, Auth) {
+    		var user_id = '101855579290050276785';
+    		// var user_id = '107766789599178301880'; // neo
+
     		var albums = [];
 
 	    	return ({
 	    		getAlbums: getAlbums,
+	    		createAlbum: createAlbum,
 	    		getPhotos: getPhotos,
 	    	});
 
@@ -385,7 +403,7 @@
 
 	    		if ( force || albums.length == 0 ) {
 		    		$http({
-		    			url: "https://picasaweb.google.com/data/feed/api/user/101855579290050276785?alt=json",
+		    			url: "https://picasaweb.google.com/data/feed/api/user/"+user_id+"?alt=json",
 		    		})
 						.then(
 							function(response) {
@@ -401,6 +419,18 @@
 	    		return deferred.promise;
 	    	}
 
+	    	function createAlbum(name) {
+// 	    		var xml = "<entry xmlns='http://www.w3.org/2005/Atom' xmlns:media='http://search.yahoo.com/mrss/' xmlns:gphoto='http://schemas.google.com/photos/2007'>
+// <title type='text'>Trip To Italy</title>
+// <summary type='text'>This was the recent trip I took to Italy.</summary>
+// <gphoto:location>Italy</gphoto:location>
+// <gphoto:access>public</gphoto:access>
+// <gphoto:timestamp>1152255600000</gphoto:timestamp>
+// <media:group><media:keywords></media:keywords></media:group>
+// <category scheme='http://schemas.google.com/g/2005#kind' term='http://schemas.google.com/photos/2007#album'></category>
+// </entry>";
+	    	}
+
 	    	function getPhotos(link) {
 	    		var req = $http({
 	    			url: link,
@@ -411,7 +441,6 @@
 
 	    	function onGetAlbums(response) {
 	    		albums = [];
-// console.log(response.data);
 	    		response.data.feed.entry.forEach(function(d) {
 	    			albums.push({
 	    				id: d.id.$t,
@@ -558,93 +587,165 @@
     	}
     ]);
 
+    app.service('LogService', [
+    	'config', 'FusionTableFactory', '$q',
+    	function(config, FusionTable, $q) {
+			var ftTable = new FusionTable(config.tables.log);
+			var logs = [];
+
+			this.getLogs = function() {
+				return ftTable.select()
+					.then(function(data) {
+						data.forEach(function(el) {
+							if ( el.photos == "" )
+								el.photos = []
+							else
+								el.photos = el.photos.split("\n");
+						});
+
+						logs = data;
+						return logs;
+		    		});
+			}
+
+    		this.addLog = function() {
+    			return {
+					name: '',
+					date: '',
+					time: '00:00',
+					photo: '',
+					photos: [],
+					text: '',
+    			}
+    		}
+
+    		this.editLog = function(id) {
+    			return angular.copy(_.where(logs, {id: id})[0]);
+    		}
+
+    		this.insert = function(data) {
+    			data.photos = data.photos.join("\n");
+
+				return ftTable.insert(data)
+					.then(function(res_id) {
+						data.id = res_id;
+						return data;
+					});
+    		}
+
+    		this.update = function(data) {
+    			data.photos = data.photos.join("\n");
+
+				return ftTable.update(data)
+					.then(function() {
+						return data;
+					});
+			}
+    	}
+    ]);
+
     app.controller('LogController', [
-    	'$scope', 'FusionTableFactory', 'DbService', 'config', 'PicasaFactory',
-		function($scope, FusionTable, Db, config, Picasa) {
+    	'$scope', 'LogService', 'FusionTableFactory', 'DbService', 'config', 'PicasaFactory', '$location',
+		function($scope, Log, FusionTable, Db, config, Picasa, $location) {
 			var ftTable = new FusionTable(config.tables.log);
 			var spots = Db.getSpots();
 
 			$scope.logs = [];
-			$scope.albums = [];
+			// $scope.albums = [];
 
-			ftTable.select()
+			Log.getLogs()
 				.then(function(data) {
-					data.forEach(function(el) {
-						if ( el.photos == "" )
-							el.photos = []
-						else
-							el.photos = el.photos.split("|");
-					});
 					$scope.logs = data;
-	    		});
-
-    		Picasa.getAlbums(false)
-    			.then(function(albums) {
-	    			$scope.albums = albums;
-    			})
-
+				})
 
 	    	$scope.addLog = function() {
-				$scope.inserted = {
-					// id: null,
-					name: '',
-					date: '',
-					photo: '',
-					photos: [],
-					text: '',
-				}
-				// $scope.logs.push($scope.inserted);
-	    	}
-
-	    	$scope.saveLog = function(data) {
-	    		if ( data && $scope.editing ) {
-	    			var d = angular.copy(data);
-	    			d.photos = d.photos.join("|");
-
-	    			ftTable.update(d)
-	    				.then(function(res_id) {
-	    					$scope.editing = null;
-	    				});
-	    		}
-
-	    		if ( $scope.inserted )
-	    		{
-	    			ftTable.insert(config.tables.log, $scope.inserted)
-	    				.then(function(res_id) {
-	    					$scope.inserted.id = res_id;
-	    					$scope.logs.push($scope.inserted);
-	    					$scope.inserted = null;
-	    				});
-    			}
+				$location.path('log/add');
 	    	}
 
 	    	$scope.editLog = function(log) {
 	    		// $scope.editing = angular.copy(log);
-	    		$scope.editing = log;
+	    		// $scope.editing = log;
 				// $('.typeahead').typeahead('val', $scope.editing.Name);
+				// console.log('log/'+log.id+'/edit');
+				$location.path('log/'+log.id+'/edit');
 		   	}
 
-	    	$scope.cancel = function() {
-	    		if ( $scope.inserted )
-	    			$scope.inserted = null;
-	    		if ( $scope.editing )
-	    			$scope.editing = null;
+	    	$scope.getSpots = function() {
+	    		return Db.getSpots();
 	    	}
+
+	    	// $scope.selectSpot = function() {
+	    	// 	$scope.editing.name = $scope.editingForm.selSpot.$viewValue.name;
+	    	// }
+
+	    	// $scope.selectAlbum = function() {
+	    	// 	$scope.editing.photo = $scope.album.folder;
+	    	// 	Picasa.getPhotos($scope.album.link)
+	    	// 		.then(function(photos) {
+	    	// 			$scope.editing.photos = photos;
+	    	// 		});
+	    	// }
+    	}
+    ]);
+
+    app.controller('LogFormController', [
+    	'$scope', '$routeParams', '$location', 'DbService', 'LogService', 'PicasaFactory',
+    	function($scope, $routeParams, $location, Db, Log, Picasa) {
+    		$scope.data = null;
+
+    		if ( !$routeParams.id ) {
+    			$scope.data = Log.addLog();
+    		}
+			else {
+    			$scope.data = Log.editLog($routeParams.id);
+			}
 
 	    	$scope.getSpots = function() {
 	    		return Db.getSpots();
 	    	}
 
 	    	$scope.selectSpot = function() {
-	    		$scope.editing.Name = $scope.editingForm.selSpot.$viewValue.Name;
+	    		$scope.data.name = $scope.logForm.selSpot.$viewValue.name;
+	    	}
+
+	    	$scope.getAlbumName = function() {
+	    		return $scope.data.name + '_' + $scope.data.date.replace(/-/g, '');
+	    	}
+
+	    	$scope.createAlbum = function() {
+	    		// Picasa.createAlbum($scope.getAlbumName())
+	    		// 	.then(function(id) {
+	    		// 		console.log(id);
+	    		// 	});
 	    	}
 
 	    	$scope.selectAlbum = function() {
-	    		$scope.editing.photo = $scope.album.folder;
+	    		$scope.data.photo = $scope.album.folder;
 	    		Picasa.getPhotos($scope.album.link)
 	    			.then(function(photos) {
-	    				$scope.editing.photos = photos;
+	    				$scope.data.photos = photos;
 	    			});
+	    	}
+
+	    	$scope.saveLog = function(data) {
+	    		// Log.save(data)
+	    		// 	.then($location.path('log');)
+	    		if ( !data.id ) {
+	    			Log.insert(data)
+	    				.then(function() {
+				    		$location.path('log');
+	    				});
+	    		}
+	    		else {
+	    			Log.update(data)
+	    				.then(function() {
+				    		$location.path('log');
+	    				});
+	    		}
+	    	}
+
+	    	$scope.cancel = function() {
+	    		$location.path('log');
 	    	}
     	}
     ]);
