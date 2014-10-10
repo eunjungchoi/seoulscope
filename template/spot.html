@@ -1,0 +1,24 @@
+<div class="page spot-page">
+    <h1 class="title">{{title}}</h1>
+    <div class="information" ng-show="spot">
+        <span>{{spot.address}}</span>
+    </div>
+    <div class="date" ng-repeat="date in getDates()">
+        <h2 class="date anchor">
+            <span class="day">{{date | date:"M.d"}}</span><span class="dayweek">{{date | date:"EEE"}}</span>
+            <span class="year">{{date | date:"yyyy"}}</span>
+        </h2>
+        <ul>
+            <li ng-repeat="log in getLogs(date)">
+                <div class="content-text">
+                    <p ng-repeat="t in log.text track by $index">{{t}}</p>
+                </div>
+                <ul>
+                    <li class="image-wrapper" ng-repeat="photo in log.photos">
+                        <img ng-src="{{photo}}">
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</div>

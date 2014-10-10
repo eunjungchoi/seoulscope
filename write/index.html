@@ -4,16 +4,16 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Admin - Seoul Scope</title>
+    <title>Write - Seoul Scope</title>
     <link rel="stylesheet" href="bootstrap/3.2.0/css/bootstrap.min.css">
-    <link rel="stylesheet" href="bootstrap/3.2.0/css/bootstrap-theme.min.css">
+    <!-- <link rel="stylesheet" href="bootstrap/3.2.0/css/bootstrap-theme.min.css"> -->
     <link href="angularjs/ui/select.min.css" rel="stylesheet">
     <link href="angular-xeditable-0.1.8/css/xeditable.css" rel="stylesheet">
     <link href="css/select2.css" rel="stylesheet">
     <link href="js/clockpicker/clockpicker.css" rel="stylesheet">
     <!-- <link href="css/typeaheadjs.css" rel="stylesheet"> -->
     <link href="style.css" rel="stylesheet">
-    <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="js/jquery-2.1.1.min.js"></script>
     <script src="js/lodash-2.4.1.min.js"></script>
     <script src="angularjs/1.2.24/angular.min.js"></script>
     <script src="angularjs/1.2.24/angular-route.min.js"></script>
@@ -110,7 +110,16 @@
             </div>
         </div>
     </div>
-<script src="script.js"></script>
+<!-- <script src="script.js"></script> -->
+<script>
+(function() {
+    document.getElementById("loader").classList.add("show");
+})();
+
+function onClientLoad() {
+    angular.bootstrap(document, ['seoulscope']);
+}
+</script>
 <script src="//apis.google.com/js/client.js?onload=onClientLoad"></script>
 </body>
 </html>

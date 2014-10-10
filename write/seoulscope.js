@@ -40,7 +40,7 @@
 	    	},
 	        zone: {
 	        	id: "1mIutuGqnSYRGz7hrWn__Ll-Xq-Ru-5amqoBJHiXU",
-	        	fields: "name, description, center, zoom, photo, shape",
+	        	fields: "name, description, center, zoom, photo, shape, city",
 	        },
 	        spot: {
 	        	id: "1EMWASH1WZg-hwRq4Sds8hBA_TSxs1IGtMe3TcjK7",
@@ -51,6 +51,13 @@
 	        	fields: "date, time, name, text, photo, photos",
 	        }
     	},
+    	STATUS: {
+    		LOADING: 'loading',
+			FIXED: 'fixed',
+			NEW: 'new',
+			UPDATING: 'updating',
+			ERROR: 'error',
+    	}
     });
 
     app.config(function($routeProvider) {
@@ -67,6 +74,14 @@
 				templateUrl: 'template/spot.html',
 				controller: 'SpotController',
 			})
+			.when('/spot/add', {
+				templateUrl: 'template/spot_form.html',
+				controller: 'SpotFormController',
+			})
+			.when('/spot/:id/edit', {
+				templateUrl: 'template/spot_form.html',
+				controller: 'SpotFormController',
+			})
 			.when('/log', {
 				templateUrl: 'template/log.html',
 				controller: 'LogController',
@@ -78,12 +93,17 @@
 			.when('/log/:id/edit', {
 				templateUrl: 'template/log_form.html',
 				controller: 'LogFormController',
+				resolve: {
+					load: function(LogService) {
+						return LogService.load();
+					}
+				}
 			})
     });
 
 	app.service('root', [
-		'$rootScope', '$location', 'AuthService', 'DbService',
-		function($rootScope, $location, Auth, Db) {
+		'$rootScope', '$location', 'AuthService', 'DbService', 'LogService',
+		function($rootScope, $location, Auth, Db, Log) {
 			var hash = null;
 
 			$rootScope.currentUser = null;
@@ -96,18 +116,24 @@
 				Auth.authorize(imm)
 					.then(
 						function() {
-							return Db.load();
+							Db.load();
+							Log.getLogs();
+
+							$rootScope.currentUser = Auth.currentUser;
+							document.getElementById("loader").classList.remove("show");
+							if ( hash )
+								$location.path(hash.replace("#", ""));
 						},
 						function() {
 							document.getElementById("loader").classList.remove("show");
 						}
 					)
-					.then(function() {
-						$rootScope.currentUser = Auth.currentUser;
-						document.getElementById("loader").classList.remove("show");
-						if ( hash )
-							$location.path(hash.replace("#", ""));
-					})
+					// .then(function() {
+					// 	$rootScope.currentUser = Auth.currentUser;
+					// 	document.getElementById("loader").classList.remove("show");
+					// 	if ( hash )
+					// 		$location.path(hash.replace("#", ""));
+					// })
 			}
 
 			$rootScope.logout = function() {
@@ -146,6 +172,7 @@
 				var deferred = $q.defer();
 
 				gapi.client.setApiKey(config.api_key);
+				console.log('>>> authorizing...');
 				gapi.auth.authorize({
 						response_type: "token",
 						client_id: config.client_id,
@@ -154,6 +181,7 @@
 					},
 					function(response) {
 						if ( response && !response.error ) {
+							console.log('  Success.');
 							self.currentUser = {
 								id: null,
 								name: 'g',
@@ -161,11 +189,13 @@
 								token_type: response.token_type,
 							}
 
+							console.log('>>> get user id...');
 							$http({
 								url: "https://www.googleapis.com/plus/v1/people/me?fields=id&key=" + config.api_key,
 								headers: {'authorization': self.currentUser.token_type + ' ' + self.currentUser.token},
 							})
 							.then(function(response) {
+								console.log('  Success.');
 								self.currentUser.id = response.data.id;
 								deferred.resolve();
 							});
@@ -202,14 +232,13 @@
     ]);
 
 	app.service('DbService', [
-		'config', 'FusionTableFactory', '$q',
-		function(config, FusionTable, $q) {
-			var self = this;
+		'$q', 'config', 'FusionTableFactory', 'SpotManager',
+		function($q, config, FusionTable, Spots) {
+			// var self = this;
 			var loaded = false;
 
 			var domains = [];
 			var zones = [];
-			var spots = [];
 
 			this.getDomains = function() {
 				return domains;
@@ -220,7 +249,7 @@
 			}
 
 			this.getSpots = function() {
-				return spots;
+				return Spots.list();
 			}
 
 			this.load = function() {
@@ -231,36 +260,33 @@
 					deferred.resolve();
 				}
 				else {
-					FusionTable.select(config.tables.domain)
-						.then(
-							function(data) {
-								domains = data;
-								return FusionTable.select(config.tables.zone);
-			    			},
-			    			function() {
-			    				deferred.reject();
-			    			}
-			    		)
-			    		.then(
-			    			function(data) {
-				    			zones = data;
-								return FusionTable.select(config.tables.spot);
-			    			},
-			    			function() {
-			    				deferred.reject();
-			    			}
-			    		)
-			    		.then(
-		    				function(data) {
-				    			spots = data;
-				    			loaded = true;
+					console.log('retrieve data...');
+					var promises = [
+						FusionTable.select(config.tables.domain),
+						FusionTable.select(config.tables.zone),
+						Spots.load(),
+					]
 
-				    			deferred.resolve();
-			    			},
-			    			function() {
-			    				deferred.reject();
-			    			}
-			    		)
+					$q.all(promises)
+						.then(
+							function(results) {
+								console.log('  Success(retrieve data).');
+
+								results[0].forEach(function(el) {
+									domains.push(el);
+								});
+								results[1].forEach(function(el) {
+									zones.push(el);
+									console.log(el);
+								});
+								// console.log(results[2]);
+
+								deferred.resolve();
+							},
+							function() {
+								deferred.reject();
+							}
+						)
 			    }
 
 		    	return deferred.promise;
@@ -349,6 +375,11 @@
 				}
 
 				return rows;
+				// _.map(data.rows, function(row) {
+				// 	var o = {id: data.rows[0]};
+				// 	for ( var j = 1, len = data.columns.length ; j < len2 ; j++ )
+				// 		o[data.columns[j]] = data.rows[i][j];
+				// })
 	    	}
 
 	    	function onInsertSuccess(response) {
@@ -398,6 +429,8 @@
 	    	});
 
 	    	function getAlbums(force) {
+				console.log('>>> get picasa album...');
+
 	    		var force = force === undefined ? true : force;
 	    		var deferred = $q.defer();
 
@@ -407,6 +440,7 @@
 		    		})
 						.then(
 							function(response) {
+								console.log('  Success(get picasa album).');
 		    					onGetAlbums(response);
 		    					deferred.resolve(albums);
 		    				}
@@ -466,14 +500,25 @@
 	]);
 
 	app.controller('BaseController', [
-		'$scope', 'PicasaFactory',
-		function($scope, Picasa) {
+		'$scope', 'config', 'PicasaFactory',
+		function($scope, config, Picasa) {
 			$scope.albums = [];
 
     		Picasa.getAlbums(false)
     			.then(function(albums) {
 	    			$scope.albums = albums;
     			})
+
+			$scope.getStatusClass = function(status) {
+				switch ( status ) {
+					case config.STATUS.UPDATING:
+						return 'info';
+					case config.STATUS.ERROR:
+						return 'error';
+					default:
+						return '';
+				}
+			}
 		}
 	]);
 
@@ -552,63 +597,260 @@
     	}
     ]);
 
-    app.controller('SpotController', [
-    	'$scope', 'FusionTableFactory', 'DbService', 'config',
-		function($scope, FusionTable, Db, config) {
-			var ftTable = new FusionTable(config.tables.spot);
+    app.service('SpotManager', [
+    	'$q', 'FusionTableFactory', 'config', 'SpotModel',
+    	function($q, FusionTable, config, Spot) {
+			var _ftTable = new FusionTable(config.tables.spot);
+			var _index = {};
+    		var _spots = [];
+    		var _deferred = $q.defer();
 
-			$scope.spots = Db.getSpots();
+    		function _getInstance(id) {
+    			var instance = _index[id];
 
-	    	$scope.addSpot = function() {
-				$scope.inserted = {
-					id: null,
-					name: '',
-					address: '',
-					coordinates: '',
-					area: '',
-				}
-				$scope.spots.push($scope.inserted);
+				if ( !instance ) {
+	                instance = new Spot();
+	                instance._status = config.STATUS.LOADING;
+
+	                _index[id] = instance;
+	            }
+
+	            return instance;
+    		}
+
+    		this.load = function() {
+    			var scope = this;
+
+	    		_ftTable.select()
+	    			.then(function(rows) {
+	    				rows.forEach(function(row) {
+	    					var spot = _getInstance(row.id);
+	    					spot.setData(row);
+			                spot._status = config.STATUS.FIXED;
+			                if ( spot._deferred )
+	    						spot._deferred.resolve(spot.copy());
+
+	    					_spots.push(spot);
+	    				})
+
+	    				_deferred.resolve(scope);
+	    			});
+
+	    		return _deferred.promise;
 	    	}
 
-	    	$scope.saveSpot = function(data, id) {
-	    		if ( id ) {
-	    			data.id = id;
-	    			ftTable.update(data);
+    		this.list = function() {
+    			return _spots;
+    		}
+
+    		this.find = function(id) {
+    			return _getInstance(id);
+    		};
+
+    		this.copy = function(id) {
+    			var spot = _getInstance(id);
+
+    			if ( !spot._deferred )
+    				spot._deferred = $q.defer();
+
+    			if ( spot._status != config.STATUS.LOADING ) {
+    				spot._deferred.resolve(spot.copy());
+    			}
+
+    			return spot._deferred.promise;
+    		};
+
+    		this.save = function(data) {
+    			var spot;
+    			var req;
+
+	    		if ( !data.id ) {
+	    			spot = new Spot();
+	    			_spots.push(spot);
+
+					req = _ftTable.insert(data);
 	    		}
 	    		else {
-	    			ftTable.insert(data)
-	    				.then(function(res_id) {
-	    					$scope.inserted.id = res_id;
-	    				});
+	    			var spot = this.find(data.id);
+
+					req = _ftTable.update(data);
+	    		}
+
+				spot.setData(data);
+    			spot._status = config.STATUS.UPDATING;
+    			if ( spot._deferred ) {
+    				spot._deferred.reject();
+					delete spot._deferred;
+    			}
+
+				req.then(
+					function(id) {
+						if ( !spot.id ) {
+							spot.id = id;
+							_index[id] = spot;
+						}
+						spot._status = config.STATUS.FIXED;
+					},
+					function() {
+						spot._status = config.STATUS.ERROR;
+					}
+				);
+			}
+		}
+    ]);
+
+	// id는 못 바꾸게 하면 좋겠네요.
+    app.factory('SpotModel', [
+    	function() {
+	    	function Spot(data) {
+	    		if ( data )
+	    			this.setData(data);
+	    	};
+
+	    	Spot.prototype = {
+	    		setData: function(data) {
+	    			angular.extend(this, data);
+	    		},
+	    		copy: function() {
+	    			var copied = {};
+
+	    			for ( var k in this ) {
+						if ( this.hasOwnProperty(k) && k.indexOf('_') != 0 )
+							copied[k] = this[k];
+	    			}
+
+	    			return copied;
 	    		}
 	    	}
 
-	    	$scope.addSpot();
+	    	return Spot;
+	    }
+    ]);
+
+    app.controller('SpotController', [
+    	'$scope', '$location', 'DbService',
+		function($scope, $location, Db) {
+			$scope.spots = Db.getSpots();
+
+	    	$scope.editSpot = function(spot) {
+				$location.path('spot/'+spot.id+'/edit');
+		   	}
+    	}
+    ]);
+
+    app.controller('SpotFormController', [
+    	'$scope', '$routeParams', '$location', 'SpotManager', 'DbService', 'FusionTableFactory', 'config',
+    	// '$scope', '$routeParams', '$location', 'DbService', 'LogService', 'PicasaFactory',
+		function($scope, $routeParams, $location, Spots, Db, FusionTable, config) {
+			var ftTable = new FusionTable(config.tables.spot);
+
+			$scope.data = {
+				id: null,
+				name: '',
+				address: '',
+				coordinates: '',
+				area: '',
+			}
+
+    		if ( $routeParams.id ) {
+    			Spots.copy($routeParams.id)
+    				.then(function(copied) {
+						angular.extend($scope.data, copied);
+    				});
+			}
+
+			$scope.getZones = function() {
+				return Db.getZones();
+			}
+
+	    	$scope.save = function(data) {
+	    		Spots.save(data);
+
+	    // 		if ( !data.id ) {
+	    // 			var spot = angular.copy(data);
+	    // 			// spot._status =
+					// Spot.add(spot);
+
+					// req = ftTable.insert(data);
+	    // 		}
+	    // 		else {
+	    // 			// var spot = Db.findSpot();
+	    // 			// var spot = _.where($scope.spots, {id: data.id});
+	    // 			// spot._status =
+	    // 			var spot = Spot.find(data.id);
+	    // 			// spot._status =
+					// for ( var key in spot )
+					// 	$spot[key] = data[key];
+
+					// req = ftTable.update(data);
+	    // 		}
+
+	    		// req.then(function(res) {
+	    		// });
+
+	    		$location.path('spot');
+	    	}
+
+	    	$scope.cancel = function() {
+	    		$location.path('spot');
+	    	}
     	}
     ]);
 
     app.service('LogService', [
     	'config', 'FusionTableFactory', '$q',
     	function(config, FusionTable, $q) {
+    		var STATUS = {
+    			FIXED: 'fixed',
+    			NEW: 'new',
+    			UPDATING: 'updating',
+    			ERROR: 'error',
+    		}
 			var ftTable = new FusionTable(config.tables.log);
 			var logs = [];
+			var deferred = $q.defer();
+			var loading = false;
 
-			this.getLogs = function() {
-				return ftTable.select()
-					.then(function(data) {
-						data.forEach(function(el) {
-							if ( el.photos == "" )
-								el.photos = []
-							else
-								el.photos = el.photos.split("\n");
-						});
+			this.load = function() {
+				if ( !loading ) {
+					loading = true;
 
-						logs = data;
-						return logs;
-		    		});
+					console.log('retrieve log data...');
+					ftTable.select()
+						.then(function(data) {
+							console.log('  Success(retrieve log data).');
+							data.forEach(function(el) {
+								el._status = STATUS.FIXED;
+
+								if ( el.photos == "" )
+									el.photos = []
+								else
+									el.photos = el.photos.split("\n");
+
+								// logs.push(el);
+							});
+
+							angular.copy(data, logs);
+
+							deferred.resolve();
+			    		});
+				}
+
+				return deferred.promise;
 			}
 
-    		this.addLog = function() {
+			this.getLogs = function() {
+				if ( logs.length == 0 )
+					this.load();
+
+		  		return logs;
+			}
+
+			this.findLog = function(id) {
+    			return _.where(logs, {id: id})[0];
+			}
+
+    		this.newLog = function() {
     			return {
 					name: '',
 					date: '',
@@ -620,84 +862,90 @@
     		}
 
     		this.editLog = function(id) {
-    			return angular.copy(_.where(logs, {id: id})[0]);
+    			var log = this.findLog(id);
+    			var data = angular.copy(this.findLog(id));
+
+    			delete data._status;
+
+    			return data;
     		}
 
-    		this.insert = function(data) {
-    			data.photos = data.photos.join("\n");
+    		this.save = function(data) {
+				data.photos = data.photos.join("\n");
 
-				return ftTable.insert(data)
-					.then(function(res_id) {
-						data.id = res_id;
-						return data;
-					});
+				var log = null;
+				var req = null;
+
+	    		if ( !data.id ) {
+					var log = angular.copy(data);
+					logs.push(log);
+
+					req = ftTable.insert(data);
+				}
+				else {
+	    			log = this.findLog(data.id);
+	    			angular.copy(data, log);
+
+					req = ftTable.update(data);
+				}
+
+				log._status = STATUS.UPDATING;
+
+				req.then(
+					function(id) {
+						if ( !log.id )
+							log.id = id;
+						log._status = STATUS.FIXED;
+					},
+					function() {
+						log._status = STATUS.ERROR;
+					}
+				);
     		}
-
-    		this.update = function(data) {
-    			data.photos = data.photos.join("\n");
-
-				return ftTable.update(data)
-					.then(function() {
-						return data;
-					});
-			}
     	}
     ]);
 
     app.controller('LogController', [
-    	'$scope', 'LogService', 'FusionTableFactory', 'DbService', 'config', 'PicasaFactory', '$location',
-		function($scope, Log, FusionTable, Db, config, Picasa, $location) {
-			var ftTable = new FusionTable(config.tables.log);
-			var spots = Db.getSpots();
+    	'$scope', '$location', 'LogService',
+		function($scope, $location, Log) {
+			$scope.logs = Log.getLogs();
 
-			$scope.logs = [];
-			// $scope.albums = [];
-
-			Log.getLogs()
-				.then(function(data) {
-					$scope.logs = data;
-				})
-
-	    	$scope.addLog = function() {
-				$location.path('log/add');
-	    	}
+			$scope.getStatusClass = function(log) {
+				switch ( log._status ) {
+					case 'updating':
+						return 'info';
+					case 'error':
+						return 'error';
+					default:
+						return '';
+				}
+			}
 
 	    	$scope.editLog = function(log) {
-	    		// $scope.editing = angular.copy(log);
-	    		// $scope.editing = log;
-				// $('.typeahead').typeahead('val', $scope.editing.Name);
-				// console.log('log/'+log.id+'/edit');
 				$location.path('log/'+log.id+'/edit');
 		   	}
-
-	    	$scope.getSpots = function() {
-	    		return Db.getSpots();
-	    	}
-
-	    	// $scope.selectSpot = function() {
-	    	// 	$scope.editing.name = $scope.editingForm.selSpot.$viewValue.name;
-	    	// }
-
-	    	// $scope.selectAlbum = function() {
-	    	// 	$scope.editing.photo = $scope.album.folder;
-	    	// 	Picasa.getPhotos($scope.album.link)
-	    	// 		.then(function(photos) {
-	    	// 			$scope.editing.photos = photos;
-	    	// 		});
-	    	// }
     	}
     ]);
 
     app.controller('LogFormController', [
     	'$scope', '$routeParams', '$location', 'DbService', 'LogService', 'PicasaFactory',
     	function($scope, $routeParams, $location, Db, Log, Picasa) {
-    		$scope.data = null;
+    		$scope.data = Log.newLog();
 
-    		if ( !$routeParams.id ) {
-    			$scope.data = Log.addLog();
+    		if ( $routeParams.id ) {
+    			angular.copy(Log.editLog($routeParams.id), $scope.data);
     		}
-			else {
-    			$scope.data = Log.editLog($routeParams.id);
+
+			$scope.getTimes = function() {
+				var times = [];
+				for ( var i = 0 ; i < 24 ; i++ ) {
+					var hour = i < 10 ? '0'+i : '' + i;
+
+					times.push(hour + ':00');
+					// times.push(hour + ':30');
+				}
+
+				return times;
 			}
 
 	    	$scope.getSpots = function() {
@@ -727,21 +975,9 @@
 	    			});
 	    	}
 
-	    	$scope.saveLog = function(data) {
-	    		// Log.save(data)
-	    		// 	.then($location.path('log');)
-	    		if ( !data.id ) {
-	    			Log.insert(data)
-	    				.then(function() {
-				    		$location.path('log');
-	    				});
-	    		}
-	    		else {
-	    			Log.update(data)
-	    				.then(function() {
-				    		$location.path('log');
-	    				});
-	    		}
+	    	$scope.save = function(data) {
+	    		Log.save(data);
+	    		$location.path('log');
 	    	}
 
 	    	$scope.cancel = function() {

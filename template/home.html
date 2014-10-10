@@ -1,0 +1,19 @@
+<div class="page home-page">
+    <h1 class="title site-title">Seoul Scope</h1>
+    <div class="date" ng-repeat="date in getDates()">
+        <h2 class="date anchor">
+            <span class="day">{{date | date:"yyyy.M.dd"}}</span><span class="dayweek">{{date | date:"EEE"}}</span>
+        </h2>
+        <ul>
+            <li ng-repeat="log in getLogs(date)">
+                <div class="content-text">
+                    <h3 class="spot"><span><a href="#/spot/{{log.name}}">{{log.name}}</a></span><span class="area" ng-show="getSpot(log.name).length">{{getSpot(log.name)[0].area}}</span></h3>
+                    <p ng-repeat="t in log.text track by $index">{{t}}</p>
+                </div>
+                <div class="image-wrapper" ng-show="log.photos.length">
+                    <img ng-src={{log.photos[0]}}>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>

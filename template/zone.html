@@ -1,0 +1,14 @@
+<div class="page zone-page">
+    <h1 class="title">{{title}}</h1>
+    <div ng-show="zone">
+        <div class="description-text">
+            <p>{{zone.description}}</p>
+        </div>
+        <div class="image-wrapper" ng-show="zone.photo">
+            <img ng-src="{{zone.photo}}"/>
+        </div>
+    </div>
+    <ul class="spots" ng-show="spots">
+        <li ng-repeat="spot in spots"><a href="" ng-href="#/spot/{{spot.name}}">{{spot.name}}</a></li>
+    <ul>
+</div>

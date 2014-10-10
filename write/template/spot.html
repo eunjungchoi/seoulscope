@@ -1,53 +1,35 @@
 <h1 class="page-header">장소</h1>
-<div class="table-responsive">
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th style="width:10%;">#</th>
-                <th style="width:15%;">Name</th>
-                <th style="width:15%;">Address</th>
-                <th style="width:25%;">Coordinates</th>
-                <th style="width:10%;">Area</th>
-                <th style="width:15%;">...</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr ng-repeat="spot in spots">
-                <td>{{spot.id}}</td>
-                <td>
-                    <span editable-text="spot.name" e-name="name" e-form="rowform" onbeforesave="beforeSave($data, spot.id)" e-required>
-                        {{ spot.name }}
-                    </span>
-                </td>
-                <td>
-                    <span editable-text="spot.address" e-name="address" e-form="rowform">
-                        {{spot.address}}
-                    </span>
-                </td>
-                <td>
-                    <a class="btn btn-default btn-xs" href="https://www.google.com/maps/@{{spot.coordinates}},16z" target="_blank" ng-show="spot.coordinates"><i class="glyphicon glyphicon-map-marker"></i></a>
-                    <span editable-text="spot.coordinates" e-name="coordinates" e-form="rowform">
+<div class="row" ng-show="spots.length == 0">
+    <div class="bg-info text-center">
+        <p>Loading...</p>
+    </div>
+</div>
+<div class="row" ng-show="spots.length > 0">
+    <a href="#/spot/add" class="btn btn-primary btn-block">
+        <span class="glyphicon glyphicon-plus"> Add</span>
+    </a>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th style="width:15%;">Name</th>
+                    <th style="width:15%;">Address</th>
+                    <th style="width:25%;">Coordinates</th>
+                    <th style="width:10%;">Area</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-click="editSpot(spot)" ng-repeat="spot in spots" style="cursor:pointer;" ng-class="getStatusClass(spot._status)">
+                    <td>{{ spot.name }}</td>
+                    <td>{{spot.address}}</td>
+                    <td>
+                        <a class="btn btn-default btn-xs" href="https://www.google.com/maps/@{{spot.coordinates}},16z" target="_blank" ng-show="spot.coordinates"><i class="glyphicon glyphicon-map-marker"></i></a>
                         {{spot.coordinates}}
-                    </span>
-                </td>
-                <td>
-                    <span editable-text="spot.area" e-name="area" e-form="rowform">
-                        {{spot.area}}
-                    </span>
-                </td>
-                <td class="text-left" style="white-space: nowrap">
-                    <form editable-form name="rowform" class="form-buttons form-inline"
-                    		ng-show="rowform.$visible"
-                    		shown="inserted == spot"
-                    		onaftersave="saveSpot($data, spot.id);">
-                        <button type="submit" ng-disabled="rowform.$waiting" class="btn btn-primary btn-sm"><i class="glyphicon glyphicon-ok"></i></button>
-                        <button type="button" ng-disabled="rowform.$waiting" ng-click="rowform.$cancel()" class="btn btn-default btn-sm"><i class="glyphicon glyphicon-remove"></i></button>
-                    </form>
-                    <div class="buttons" ng-show="!rowform.$visible">
-                        <button class="btn btn-primary btn-xs" ng-click="rowform.$show()"><span class="glyphicon glyphicon-edit"></span></button>
-                    </div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+                    </td>
+                    <td>{{spot.area}}</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>

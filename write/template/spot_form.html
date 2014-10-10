@@ -1,0 +1,36 @@
+<h1 class="page-header">장소</h1>
+<div>
+    <form role="form" name="spotForm">
+        <div class="form-group">
+            <input type="text" class="form-control" id="name" placeholder="Name" ng-model="data.name">
+        </div>
+        <div class="form-group">
+            <input type="text" class="form-control" id="address" placeholder="Address" ng-model="data.address">
+        </div>
+
+        <div class="form-group">
+            <div class="input-group">
+                <span class="input-group-addon"><i class="glyphicon glyphicon-map-marker"></i></span>
+                <input type="text" class="form-control" id="coordinates" placeholder="Coordinates" ng-model="data.coordinates">
+            </div>
+        </div>
+        <div class="form-group">
+            <ui-select ng-model="data.area" theme="bootstrap" style="min-width: 100%;">
+                <ui-select-match placeholder="Select or search an area in the list...">{{$select.selected.name}}</ui-select-match>
+                <ui-select-choices group-by="'city'" repeat="zone.name as zone in getZones() | filter: $select.search">
+                    <span ng-bind-html="zone.name | highlight: $select.search"></span>
+                </ui-select-choices>
+            </ui-select>
+        </div>
+        <div class="form-group">
+            <input type="text" class="form-control" id="area" placeholder="Area" ng-model="data.area" style="width:49%;display:inline-block;">
+            <select class="form-control" id="areas" name="selZone" ng-model="data.area" ng-options="zone.name as zone.name for zone in getZones()" style="width:49%;display:inline-block;float:right;">
+                <option value="">... or select spot.</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <input type="submit" class="btn btn-primary" ng-click="save(data);" value="Save"/>
+            <input type="reset"  class="btn btn-default" ng-click="cancel();" value="Cancel"/>
+        </div>
+    </form>
+</div>

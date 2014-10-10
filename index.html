@@ -1,73 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="seoulscope">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-<!--
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
--->
     <title>Seoul Scope</title>
-    <link href='http://www.openhiun.com/hangul/nanumbarungothic.css' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Great+Vibes' rel='stylesheet' type='text/css'>
     <link href="style.css" rel="stylesheet">
-    <link href="css/font-awesome.min.css" rel="stylesheet">
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
     <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCUphKCCMUpng-f3DZEiCGhT8j06GliYRo&v=3.exp"></script>
-    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
-    <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
-    <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
-    <script type="text/javascript" src="js/handlebars-v1.3.0.js"></script>
-    <script type="text/javascript" scr="angularjs/1.2.24/angular.min.js"></script>
-    <script type="text/javascript" scr="angularjs/1.2.24/angular-route.min.js"></script>
-    <script type="text/javascript" src="script.js"></script>
+    <!-- // <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script> -->
+    <!-- // <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script> -->
+    <script src="js/lodash-2.4.1.min.js"></script>
+    <script type="text/javascript" src="angularjs/1.2.24/angular.min.js"></script>
+    <script type="text/javascript" src="angularjs/1.2.24/angular-route.min.js"></script>
+    <script type="text/javascript" src="angularjs/1.2.24/angular-animate.min.js"></script>
+    <script type="text/javascript" src="js/hammer.min.js"></script>
+    <script type="text/javascript" src="app.js"></script>
 </head>
-<body>
+<body ng-controller="BaseController">
     <div id="log-tooltip" class="tooltip"></div>
-    <div class="nav log-nav">
-        <div id="log-nav-mag-frame">
-            <nav id="log-nav-mag"></nav>
-        </div>
-        <nav id="log-nav"></nav>
-    </div>
-    <nav id="tag-nav">
-        <ul id="tag-list">
-        </ul>
-    </nav>
-    <div id="page-container" style="-webkit-overflow-scrolling: touch;">
-        <div id="home-page" class="page template">
-            <h1>Seoul Scope</h1>
-            {{#each dates}}
-            <div id="{{id}}" class="anchor">
-                <h2 class="date"><span><i class="fa fa-calendar"></i>{{formatDate date}}</span></h2>
-                <ul>
-                    {{#each logs}}
-                    <li data-log-id="{{id}}">
-                        <h3><span>{{#if spot}}<a href="#" data-name="{{name}}">{{name}}</a>{{else}}{{name}}{{/if}}<span>{{#if spot}}<span class="tag">{{spot.tag}}</span>{{/if}}</h3>
-                        <p>{{{text}}}</p>
-                    </li>
-                    {{/each}}
-                </ul>
-            </div>
-            {{/each}}
-        </div>
-        <div id="tag-page" class="page template">
-            <h1>{{title}}</h1>
-            <hr>
-            <blockquote>{{description}}</blockquote>
-            <ul class="images">
-                <li><img src=""></li>
-            </ul>
-        </div>
-        <div id="spot-page" class="page template">
-            <h1>{{title}}</h1>
-            {{#each dates}}
-            <div id="{{id}}" class="anchor">
-                <h2 class="date"><span><i class="fa fa-calendar"></i>{{formatDate log.date}}</span></h2>
-                <p>{{{log.text}}}</p>
-                <ul data-log-id="{{log.id}}" class="images"></ul>
-            </div>
-            {{/each}}
+    <div id="nav-log" class="nav nav-log" ng-controller="NavLogController">
+        <div id="log-index" class="log-index" ng-mousemove="hideTooltip($event)">
+            <div class="tick" ng-repeat="tick in ticks" ng-style="{left: calcLeft(tick)}"></div>
+            <div class="log today" ng-style="{left: calcLeft(today)}"></div>
+            <div class="log" ng-repeat="date in getDates()" ng-style="{left: calcLeft(date)}" ng-mousemove="mouseMove($event, date)"></div>
         </div>
     </div>
-    <div id="map-canvas"></div>
+    <div id="nav-domain" class="nav nav-domain nav-left" ng-show="showDomainNav" ng-controller="NavDomainController">
+        <div class="domain-wrapper">
+            <div class="domain">
+<!--                 <h1><a href="" ng-click="clickDomain(domain)">{{domain.name}}</a></h1>-->
+                <div class="zones-wrapper" style="padding-top:4px;">
+                    <ul class="zones">
+                        <li>
+                            <a href="#/"><i class="fa fa-paper-plane"></i></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="domain" ng-repeat="domain in getDomains()">
+                <h1><a href="" ng-click="clickDomain(domain)">{{domain.name}}</a></h1>
+                <div class="zones-wrapper">
+                    <ul class="zones" ng-show="isShown(domain);">
+                        <li>
+                            <a href="">☆☆☆☆☆</a>
+                            <ul class="spots">
+                                <li ng-repeat="spot in getBestSpots(domain.name)">
+                                    <a href="#/spot/{{spot.name}}">{{spot.name}}</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li ng-repeat="zone in getZones(domain.name) | orderBy:'name'">
+                            <a href="#/zone/{{zone.name}}">{{zone.name}}</a>
+                            <ul class="spots">
+                                <li ng-repeat="spot in getSpots(zone.name)">
+                                    <a href="#/spot/{{spot.name}}">{{spot.name}}</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="page-container" class="pane pane-right">
+        <div id="page-header" class="page-header">
+            <button class="btn-map" ng-click="toggleMap();"></button>
+        </div>
+        <div id="ng-view" ng-view>
+        </div>
+        <div id="page-fin" class="fin">- Fin.</div>
+    </div>
+    <div class="pane pane-left" style="background-color:gray;">
+        <div id="map-canvas"></div>
+    </div>
 </body>
 </html>
